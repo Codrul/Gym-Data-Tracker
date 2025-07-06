@@ -1,7 +1,0 @@
-What do I need the database to have? Listing requirements:
-1. I need to see all the facts such as: 
-  a. how many sets, reps, weight(resistance) has been lifted per exercise per day 
-  b. a table with all the exercises with maybe some attributes like (id, name, compound/isolated, resistance type, etc.)  
-   c. a table with all the muscles I train 
-    b and c. a bridge table which will link exercises to muscles for data visualization and graphics 
-  d. a table with times (like a dimension)

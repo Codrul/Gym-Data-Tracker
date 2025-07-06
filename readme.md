@@ -1,5 +1,19 @@
-Title: Gym Data Tracker
-Tags: Data Engineering, Data Integration, data visualization, orchestration, airflow, postgresql, api, 
-Scope: Complete ETL pipeline which extracts data daily from Excel Sheets or Google Drive Excels, loads it into a database and then transforms it and sendsit to a PowerBI dashboard daily for analytics and storage. 
-Technologies to use: postgresql, PowerBI, api, airflow, python
+# Gym Data Tracker
 
+> ## Project Scope
+> 
+> This project wants to create a data pipeline which extracts data from Excel sheets, passes them through a database for
+> storage using Airflow for orchestration and uses a dimensional
+> layer to create fresh Power BI visuals
+
+
+
+> ## Chapter 1: _Data Modeling_
+> The first step was to get the required data. Before starting 
+> to track workouts I needed to think about how 
+> I will have my data structured in my DB. 
+> I wanted to get straight into writing SQL,
+> but I knew it would get messy along the way.
+> So I started by creating a conceptual model for my 
+> data warehouse.
+> 
