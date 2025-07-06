@@ -2,9 +2,9 @@
 
 > ## Project Scope
 > 
-> This project wants to create a data pipeline which extracts data from Excel sheets, passes them through a database for
-> storage using Airflow for orchestration and uses a dimensional
-> layer to create fresh Power BI visuals
+> This project wants to create a data pipeline which extracts data from Google Sheets, passes it through a database for
+> storage and uses a dimensional
+> layer to create real-time Power BI visuals.
 
 
 
