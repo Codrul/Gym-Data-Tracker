@@ -27,4 +27,3 @@ CREATE TABLE IF NOT EXISTS staging_layer.exercise_muscle (
 	muscle_role VARCHAR(256)
 );
  -- will need to create the fact table after I think it through 
-
