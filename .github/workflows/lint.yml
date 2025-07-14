@@ -1,10 +1,6 @@
 name: Lint Python
 
-on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+on: [push, pull_request]
 
 jobs:
   lint:
@@ -13,7 +9,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@master
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,4 +23,4 @@ jobs:
 
       - name: Run flake8
         run: |
-          flake8 DWH/
+          flake8 
