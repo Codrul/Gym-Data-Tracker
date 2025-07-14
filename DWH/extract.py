@@ -1,68 +1,154 @@
-import gspread
-import psycopg2
 import pandas as pd
+import gspread
 from google.oauth2.service_account import Credentials
-
-# scopes here
-scopes = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-# credentials here
-credentials = Credentials.from_service_account_file(
-    "C:\\Users\\aditz\\Gym_Data_Tracker\\APIs\\grand-strand-465118-v6-5c8c40adf654.json",
-    scopes=scopes
+from sqlalchemy import (
+    MetaData, create_engine, Table, Column,
+    select, insert, String
 )
-# authorize command
-gc = gspread.authorize(credentials)
-# open sheet by key
-spreadsheet = gc.open_by_key('1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ')
-worksheet = spreadsheet.worksheet('Exercises')
-# pass records to data
-exercise_table = worksheet.get_all_records()
 
-# connecting to my db
+# Google Sheets API setup
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+CREDENTIALS = Credentials.from_service_account_file(
+    "C:\\Users\\aditz\\Gym_Data_Tracker\\APIs\\grand-strand-465118-v6-5c8c40adf654.json",
+    scopes=SCOPES
+)
+gc = gspread.authorize(CREDENTIALS)
+
+# PostgreSQL connection
 with open('APIs/pgpass.txt', 'r') as f:
     db_pass = f.read().strip()
-conn = psycopg2.connect(
-    database='gym_data',
-    user='postgres',
-    password=db_pass,
-    host='localhost',
-    port='5432'
+
+engine = create_engine(
+    f'postgresql+psycopg2://postgres:{db_pass}@localhost:5432/gym_data'
+)
+metadata = MetaData()
+
+# Table definitions
+exercises = Table(
+    'exercises', metadata,
+    Column('exercise_id', String, primary_key=True),
+    Column('exercise_name', String),
+    Column('exercise_movement_type', String),
+    Column('exercise_bodysplit', String),
+    schema='staging_layer'
 )
 
-cursor = conn.cursor()
+exercise_muscle = Table(
+    'exercise_muscle', metadata,
+    Column('exercise_id', String, primary_key=True),
+    Column('exercise_name', String),
+    Column('muscle_id', String),
+    Column('muscle_name', String),
+    Column('muscle_role', String),
+    schema='staging_layer'
+)
 
-df = pd.DataFrame(exercise_table)
-# since column names are different i will need to map them
-column_mapping = {
-    'ID': 'exercise_id',
-    'Name': 'exercise_name',
-    'Movement type': 'exercise_movement_type',
-    'Upper/Lower': 'exercise_bodysplit'
-}
-df.rename(columns=column_mapping, inplace=True)
-exercise_df = df[
-    ['exercise_id', 'exercise_name', 'exercise_movement_type', 'exercise_bodysplit']
-]
 
-# the insert query
-insert_query = """
-    INSERT INTO staging_layer.exercises(exercise_id,exercise_name,
-    exercise_movement_type, exercise_bodysplit)
-    SELECT %s, %s, %s, %s
-    WHERE NOT EXISTS (
-        SELECT 1 FROM staging_layer.exercises WHERE exercise_id = '%s'
-    )
-"""
+def load_exercises():
+    try:
+        spreadsheet = gc.open_by_key(
+            '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'
+        )
+        worksheet = spreadsheet.worksheet('Exercises')
+        exercise_table = worksheet.get_all_records()
+    except Exception as e:
+        print(f'Error {e} occurred. Failed to load from Google Sheets')
+        return
 
-for row in exercise_df.itertuples(index=False):
-    cursor.execute(insert_query,
-                   (
-                    row.exercise_id,
-                    row.exercise_name,
-                    row.exercise_movement_type,
-                    row.exercise_bodysplit,
-                    row.exercise_id
-                   )
-                   )
-conn.commit()
-# adding a comment to test linter
+    df = pd.DataFrame(exercise_table)
+    column_mapping = {
+        'ID': 'exercise_id',
+        'Name': 'exercise_name',
+        'Movement type': 'exercise_movement_type',
+        'Upper/Lower': 'exercise_bodysplit'
+    }
+    df.rename(columns=column_mapping, inplace=True)
+
+    exercise_df = df[
+        ['exercise_id', 'exercise_name',
+         'exercise_movement_type', 'exercise_bodysplit']
+    ]
+
+    try:
+        inserted_rows = 0
+        with engine.connect() as conn:
+            for row in exercise_df.itertuples(index=False):
+                exists_stmt = select(exercises.c.exercise_id).where(
+                    exercises.c.exercise_id == str(row.exercise_id)
+                )
+                result = conn.execute(exists_stmt).fetchone()
+                if result is None:
+                    ins_stmt = insert(exercises).values(
+                        exercise_id=row.exercise_id,
+                        exercise_name=row.exercise_name,
+                        exercise_movement_type=row.exercise_movement_type,
+                        exercise_bodysplit=row.exercise_bodysplit
+                    )
+                    conn.execute(ins_stmt)
+                    inserted_rows += 1
+            conn.commit()
+        return (
+            f"{inserted_rows} rows have been loaded "
+            "into *staging_layer.exercises*"
+        )
+    except Exception as e:
+        print(f'Error {e} occurred. Could not insert into the exercises table')
+
+
+def load_exercise_muscle():
+    try:
+        spreadsheet = gc.open_by_key(
+            '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'
+        )
+        worksheet = spreadsheet.worksheet('Exercise_Muscle')
+        exercise_muscle_table = worksheet.get_all_records()
+    except Exception as e:
+        print(f'Error {e} occurred. Failed to load from Google Sheets')
+        return
+
+    df = pd.DataFrame(exercise_muscle_table)
+    column_mapping = {
+        'Exercise_ID': 'exercise_id',
+        'Ex_name': 'exercise_name',
+        'Muscle_ID': 'muscle_id',
+        'Musc_name': 'muscle_name',
+        'Role': 'muscle_role'
+    }
+    df.rename(columns=column_mapping, inplace=True)
+
+    df = df[
+        ['exercise_id', 'exercise_name',
+         'muscle_id', 'muscle_name', 'muscle_role']
+    ]
+
+    try:
+        inserted_rows = 0
+        with engine.connect() as conn:
+            for row in df.itertuples(index=False):
+                exists_stmt = select(exercise_muscle.c.exercise_id).where(
+                    (exercise_muscle.c.exercise_id == str(row.exercise_id)) &
+                    (exercise_muscle.c.muscle_id == str(row.muscle_id))
+                )
+                result = conn.execute(exists_stmt).fetchone()
+                if result is None:
+                    ins_stmt = insert(exercise_muscle).values(
+                        exercise_id=row.exercise_id,
+                        exercise_name=row.exercise_name,
+                        muscle_id=row.muscle_id,
+                        muscle_name=row.muscle_name,
+                        muscle_role=row.muscle_role
+                    )
+                    conn.execute(ins_stmt)
+                    inserted_rows += 1
+            conn.commit()
+        return (
+            f"{inserted_rows} rows have been loaded "
+            "into *staging_layer.exercise_muscle*"
+        )
+    except Exception as e:
+        print(f'Error {e} occurred. Could not insert into exercise_muscle')
+
+
+# Run functions
+print(load_exercises())
+print(load_exercise_muscle())
