@@ -1,2 +1,5 @@
 APIs/*.json
 APIs/*.txt
+__pycache__/
+*.pyc
+venv/
