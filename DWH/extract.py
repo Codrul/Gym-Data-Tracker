@@ -5,7 +5,7 @@ from google.oauth2.service_account import Credentials
 
 # scopes here
 scopes = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-#credentials here
+# credentials here
 credentials = Credentials.from_service_account_file(
     "C:\\Users\\aditz\\Gym_Data_Tracker\\APIs\\grand-strand-465118-v6-5c8c40adf654.json",
     scopes=scopes
@@ -40,8 +40,9 @@ column_mapping = {
     'Upper/Lower': 'exercise_bodysplit'
 }
 df.rename(columns=column_mapping, inplace=True)
-exercise_df = df[['exercise_id', 'exercise_name', 'exercise_movement_type',
-                   'exercise_bodysplit']]
+exercise_df = df[
+    ['exercise_id', 'exercise_name', 'exercise_movement_type', 'exercise_bodysplit']
+]
 
 # the insert query
 insert_query = """
@@ -54,10 +55,14 @@ insert_query = """
 """
 
 for row in exercise_df.itertuples(index=False):
-    cursor.execute(insert_query,(row.exercise_id,
-                                 row.exercise_name,
-                                 row.exercise_movement_type,
-                                 row.exercise_bodysplit,
-                                 row.exercise_id))
+    cursor.execute(insert_query,
+                   (
+                    row.exercise_id,
+                    row.exercise_name,
+                    row.exercise_movement_type,
+                    row.exercise_bodysplit,
+                    row.exercise_id
+                   )
+                   )
 conn.commit()
 # adding a comment to test linter
