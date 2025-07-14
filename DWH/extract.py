@@ -60,3 +60,4 @@ for row in exercise_df.itertuples(index=False):
                                  row.exercise_bodysplit,
                                  row.exercise_id))
 conn.commit()
+# adding a comment to test linter 
