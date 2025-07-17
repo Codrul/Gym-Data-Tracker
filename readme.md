@@ -9,6 +9,7 @@
 
 
 > ## Chapter 1: _Data Modeling_
+> ### The Conceptual Model
 > The first step was to architecture the Data Warehouse. Before starting 
 > to track workouts I needed to think about how 
 > I will have my data structured in my DB. 
@@ -17,7 +18,7 @@
 > So I started by creating a conceptual model for my 
 > data warehouse.
 > 
-> **insert conceptual png**
+> ![Conceptual model](Images/conceptual_model.png)
 > 
 > I thought about what I want to track in my reports and came up with the model above.
 > As I have done in my previous DWH projects, I am going with a mix of Inmon and Kimball's approach 
@@ -37,14 +38,37 @@
 > reward (e.g. knowing your 20 muscles similar to your flexor hallucis are being worked alongside your calves is not 
 > essential information for me at this moment).
 > 3. **Workouts**  -- the actual training session. I could have inferred this entity by having date_id + set + exercise be a
-> primary key, but I thought about the possibility of having multiple workouts in a day so I decided to make this an
+> primary key, but I thought about the possibility of having multiple workouts in a day, so I decided to make this an
 > entity.
 > 4. **Resistance types** -- the equipment or lack thereof used with the exercises. I wanted this as a separate dimension
 > because I do not want it tied to the exercises entity through a bridge since almost any exercise can be modified to 
 > use any resistance (this is debatable but not relevant in our context)
-> 5. **Date** -- this will be a separate dimension for reporting purposes such as knowing what day of the week it is, which
-> day of the month it is, etc.
+>
 > 
 > Now that we have these in mind, we can start adding attributes and think about how they should be related to 
 > eachother. 
 > 
+> ### The Logical Model
+> ![Logical Model](Images/logical_model.png)
+> 
+> The model displayed above is the next step in our data modeling process. We have defined attributes for each
+> identity, we thought about the relationships between our identities, and we also are getting closer 
+> to the technical design (the physical model), by thinking about how we will normalize our database.
+> 
+> The first changes that can be seen in this model is that we added two new tables: dates and exercise_muscles.
+> The exercise_muscles table is what is usually called in data modeling as a "bridge table".
+> This table maps exercises to muscles being used during those exercises. Its primary function, however, is enabling us 
+> to keep our data schema more normalized by avoiding a Many to Many (M-M) relationship between our two tables. By 
+> having this bridge table connecting our two dimensions, each dimension has a One-to-Many relationship with the bridge 
+> table.
+> 
+> We are also adding a new table named "Dates" which will be a generated table helpful for slicing and dicing in 
+> reporting.  
+> 
+> In the middle we can see our fact table forming Many-to-One (M:1) relationships with its' dimensions through 
+> foreign keys (FK) which are the primary keys (PK) in the dimensional tables.
+> 
+> Now we need to think about which data types we should give each attribute and what other constraints we want to set so
+> we keep our data consistent. 
+> 
+> ### The Physical Model
