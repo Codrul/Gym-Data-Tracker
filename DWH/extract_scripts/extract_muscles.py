@@ -1,4 +1,11 @@
-# self explaining module name really    
+import pandas as pd
+from sqlalchemy import (
+    MetaData, Table, Column,
+    select, insert, String
+)
+
+metadata = MetaData()
+# self explaining module name really
 muscles = Table(
     'muscles', metadata,
     Column('muscle_id', String, primary_key=True),
@@ -7,7 +14,7 @@ muscles = Table(
     schema='staging_layer'
 )
 
-def load_muscles():
+def load_muscles(gc, engine):
     try:
         spreadsheet = gc.open_by_key(
             '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'

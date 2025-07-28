@@ -1,3 +1,11 @@
+import pandas as pd
+from sqlalchemy import (
+    MetaData, Table, Column,
+    select, insert, String
+)
+
+metadata = MetaData()
+
 resistance_types = Table(
     'resistance_types', metadata,
     Column('resistance_id', String, primary_key=True),
@@ -6,7 +14,7 @@ resistance_types = Table(
     schema='staging_layer'
 )
 
-def load_resistance_types():
+def load_resistance_types(gc, engine):
     try:
         spreadsheet = gc.open_by_key(
             '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'

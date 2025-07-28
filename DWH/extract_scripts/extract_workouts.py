@@ -1,5 +1,12 @@
+import pandas as pd
+from sqlalchemy import (
+    MetaData, Table, Column,
+    select, insert, String
+)
+metadata = MetaData()
+
 workouts = Table(
-    'workouts', metadata, 
+    'workouts', metadata,
     Column('workout_id', String, primary_key=True),
     Column('date', String),
     Column('set_number', String),
@@ -15,7 +22,7 @@ workouts = Table(
 
 
 
-def load_workouts():
+def load_workouts(gc, engine):
     try:
         spreadsheet = gc.open_by_key(
             '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'

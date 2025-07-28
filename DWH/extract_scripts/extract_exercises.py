@@ -1,4 +1,11 @@
-# define the table 
+import pandas as pd
+from sqlalchemy import (
+    MetaData, Table, Column,
+    select, insert, String
+)
+
+metadata = MetaData()
+# define the table
 exercises = Table(
     'exercises', metadata,
     Column('exercise_id', String, primary_key=True),
@@ -9,7 +16,7 @@ exercises = Table(
 )
 
 
-def load_exercises():
+def load_exercises(gc, engine):
     try:
         spreadsheet = gc.open_by_key(
             '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'
