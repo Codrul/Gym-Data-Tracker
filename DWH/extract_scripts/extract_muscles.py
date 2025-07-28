@@ -14,6 +14,7 @@ muscles = Table(
     schema='staging_layer'
 )
 
+
 def load_muscles(gc, engine):
     try:
         spreadsheet = gc.open_by_key(
@@ -59,5 +60,3 @@ def load_muscles(gc, engine):
         )
     except Exception as e:
         print(f'Error {e} occurred. Could not insert into muscle')
-
-

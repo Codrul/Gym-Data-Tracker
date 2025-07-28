@@ -65,5 +65,3 @@ def load_exercises(gc, engine):
         )
     except Exception as e:
         print(f'Error {e} occurred. Could not insert into *staging_layer.exercises*')
-
-

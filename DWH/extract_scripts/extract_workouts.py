@@ -21,7 +21,6 @@ workouts = Table(
 )
 
 
-
 def load_workouts(gc, engine):
     try:
         spreadsheet = gc.open_by_key(
@@ -47,7 +46,8 @@ def load_workouts(gc, engine):
         'Workout type': 'workout_type'
     }
     df.rename(columns=column_mapping, inplace=True)
-    df = df[ ['workout_id', 'date', 'set_number','exercise', 'reps', 'load','resistance_type', 'set_type', 'comments','workout_type'] ] 
+    df = df[['workout_id', 'date', 'set_number', 'exercise', 'reps', 'load', 'resistance_type', 'set_type',
+             'comments', 'workout_type']]
     try:
         inserted_rows = 0
         with engine.connect() as conn:
@@ -81,5 +81,3 @@ def load_workouts(gc, engine):
         )
     except Exception as e:
         print(f'Error {e} occurred. Could not insert into workouts')
-
-
