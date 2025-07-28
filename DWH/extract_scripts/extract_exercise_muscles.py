@@ -68,4 +68,3 @@ def load_exercise_muscle(gc, engine):
         )
     except Exception as e:
         print(f'Error {e} occurred. Could not insert into exercise_muscle')
-

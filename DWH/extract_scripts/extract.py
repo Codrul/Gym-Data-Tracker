@@ -1,8 +1,8 @@
 import extract_exercise_muscles as eem
 import extract_exercises as ee
-import extract_muscles as em 
-import extract_resistance_types as ert 
-import extract_workouts as ew 
+import extract_muscles as em
+import extract_resistance_types as ert
+import extract_workouts as ew
 import connect as c
 
 
