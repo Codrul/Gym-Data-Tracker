@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import (
     MetaData, Table, Column,
-    select, insert, String
+    select, insert, String, DateTime
 )
 
 metadata = MetaData()
@@ -11,11 +11,12 @@ resistance_types = Table(
     Column('resistance_id', String, primary_key=True),
     Column('resistance_type', String),
     Column('resistance_category', String),
+    Column('created_at', DateTime),
     schema='staging_layer'
 )
 
 
-def load_resistance_types(gc, engine):
+def load_resistance_types(gc, engine, success_msg, error_msg):
     try:
         spreadsheet = gc.open_by_key(
             '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'
@@ -23,7 +24,7 @@ def load_resistance_types(gc, engine):
         worksheet = spreadsheet.worksheet('Resistance_types')
         resistance_table = worksheet.get_all_records()
     except Exception as e:
-        print(f'Error {e} occurred. Failed to load from Google Sheets')
+        error_msg.append(f'[extract_resistance_types] Error {e} occurred. Failed to load from Google Sheets')
         return
 
     df = pd.DataFrame(resistance_table)
@@ -33,9 +34,10 @@ def load_resistance_types(gc, engine):
         'Resistance_category': 'resistance_category',
     }
     df.rename(columns=column_mapping, inplace=True)
+    df['created_at'] = pd.Timestamp.now()
 
     df = df[
-        ['resistance_id', 'resistance_type', 'resistance_category']
+        ['resistance_id', 'resistance_type', 'resistance_category', 'created_at']
     ]
 
     try:
@@ -50,13 +52,12 @@ def load_resistance_types(gc, engine):
                         resistance_id=row.resistance_id,
                         resistance_type=row.resistance_type,
                         resistance_category=row.resistance_category,
+                        created_at=row.created_at
                     )
                     conn.execute(ins_stmt)
                     inserted_rows += 1
             conn.commit()
-        return (
-            f"{inserted_rows} rows have been loaded "
-            "into *staging_layer.resistance_types*"
-        )
+            success_msg.append(f'{inserted_rows} have been inserted into staging_layer.resistance_types')
+        return
     except Exception as e:
-        print(f'Error {e} occurred. Could not insert into muscle')
+        error_msg.append(f'Error {e} occurred. Could not insert into resistance_types')

@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import (
     MetaData, Table, Column,
-    select, insert, String
+    select, insert, String, DateTime
 )
 metadata = MetaData()
 
@@ -17,11 +17,12 @@ workouts = Table(
     Column('set_type', String),
     Column('comments', String),
     Column('workout_type', String),
+    Column('created_at', DateTime),
     schema='staging_layer'
 )
 
 
-def load_workouts(gc, engine):
+def load_workouts(gc, engine, success_msg, error_msg):
     try:
         spreadsheet = gc.open_by_key(
             '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'
@@ -29,7 +30,7 @@ def load_workouts(gc, engine):
         worksheet = spreadsheet.worksheet('Workouts')
         workouts_table = worksheet.get_all_records()
     except Exception as e:
-        print(f'Error {e} occurred. Failed to load from Google Sheets')
+        error_msg.append(f'[extract_workouts] Error {e} occurred. Failed to load from Google Sheets')
         return
 
     df = pd.DataFrame(workouts_table)
@@ -46,8 +47,9 @@ def load_workouts(gc, engine):
         'Workout type': 'workout_type'
     }
     df.rename(columns=column_mapping, inplace=True)
+    df['created_at'] = pd.Timestamp.now()
     df = df[['workout_id', 'date', 'set_number', 'exercise', 'reps', 'load', 'resistance_type', 'set_type',
-             'comments', 'workout_type']]
+             'comments', 'workout_type', 'created_at']]
     try:
         inserted_rows = 0
         with engine.connect() as conn:
@@ -70,14 +72,13 @@ def load_workouts(gc, engine):
                         resistance_type=row.resistance_type,
                         set_type=row.set_type,
                         comments=row.comments,
-                        workout_type=row.workout_type
+                        workout_type=row.workout_type,
+                        created_at=row.created_at
                     )
                     conn.execute(ins_stmt)
                     inserted_rows += 1
                 conn.commit()
-        return (
-            f"{inserted_rows} rows have been loaded "
-            "into *staging_layer.workouts*"
-        )
+        success_msg.append(f"{inserted_rows} rows have been loaded into *staging_layer.workouts*")
+        return
     except Exception as e:
-        print(f'Error {e} occurred. Could not insert into workouts')
+        error_msg.append(f'Error {e} occurred. Could not insert into workouts')
