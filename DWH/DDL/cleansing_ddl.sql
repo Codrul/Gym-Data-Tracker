@@ -51,3 +51,20 @@ CREATE TABLE IF NOT EXISTS cleansing_layer.cl_workouts(
 	workout_type VARCHAR(256),
   	created_at TIMESTAMP
 );
+
+-- now creating some ID sequences
+CREATE SEQUENCE IF NOT EXISTS cleansing_layer.exercise_id_seq
+START WITH 1 
+INCREMENT BY 1;
+
+CREATE SEQUENCE IF NOT EXISTS cleansing_layer.muscle_id_seq
+START WITH 1 
+INCREMENT BY 1;
+
+CREATE SEQUENCE IF NOT EXISTS cleansing_layer.workout_id_seq
+START WITH 1 
+INCREMENT BY 1;
+
+CREATE SEQUENCE IF NOT EXISTS cleansing_layer.resistance_id_seq
+START WITH 1 
+INCREMENT BY 1;
