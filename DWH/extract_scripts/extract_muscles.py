@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import (
     MetaData, Table, Column,
-    select, insert, String
+    select, insert, String, DateTime
 )
 
 metadata = MetaData()
@@ -11,11 +11,12 @@ muscles = Table(
     Column('muscle_id', String, primary_key=True),
     Column('muscle_name', String),
     Column('muscle_group', String),
+    Column('created_at', DateTime),
     schema='staging_layer'
 )
 
 
-def load_muscles(gc, engine):
+def load_muscles(gc, engine, success_msg, error_msg):
     try:
         spreadsheet = gc.open_by_key(
             '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'
@@ -23,19 +24,20 @@ def load_muscles(gc, engine):
         worksheet = spreadsheet.worksheet('Muscles')
         muscles_table = worksheet.get_all_records()
     except Exception as e:
-        print(f'Error {e} occurred. Failed to load from Google Sheets')
+        error_msg.append(f'Error {e} occurred. Failed to load from Google Sheets')
         return
 
     df = pd.DataFrame(muscles_table)
     column_mapping = {
         'ID': 'muscle_id',
         'Muscle name': 'muscle_name',
-        'Muscle groups': 'muscle_group',
+        'Muscle groups': 'muscle_group'
     }
     df.rename(columns=column_mapping, inplace=True)
+    df['created_at'] = pd.Timestamp.now()
 
     df = df[
-        ['muscle_id', 'muscle_name', 'muscle_group']
+        ['muscle_id', 'muscle_name', 'muscle_group', 'created_at']
     ]
 
     try:
@@ -50,13 +52,12 @@ def load_muscles(gc, engine):
                         muscle_id=row.muscle_id,
                         muscle_name=row.muscle_name,
                         muscle_group=row.muscle_group,
+                        created_at=row.created_at
                     )
                     conn.execute(ins_stmt)
                     inserted_rows += 1
             conn.commit()
-        return (
-            f"{inserted_rows} rows have been loaded "
-            "into *staging_layer.muscle*"
-        )
+            success_msg.append(f'[extract_muscle] has inserted {inserted_rows} rows into staging_layer.muscles successfully')
+        return
     except Exception as e:
-        print(f'Error {e} occurred. Could not insert into muscle')
+        error_msg.append(f'Error {e} occurred. Could not insert into muscle')
