@@ -7,7 +7,7 @@ metadata = MetaData()
 
 workouts = Table(
     'workouts', metadata,
-    Column('workout_id', String, primary_key=True),
+    Column('workout_number', String, primary_key=True),
     Column('date', String),
     Column('set_number', String),
     Column('exercise', String),
@@ -35,7 +35,7 @@ def load_workouts(gc, engine, success_msg, error_msg):
 
     df = pd.DataFrame(workouts_table)
     column_mapping = {
-        'Workout number': 'workout_id',
+        'Workout number': 'workout_number',
         'Date': 'date',
         'Set': 'set_number',
         'Exercise': 'exercise',
@@ -48,14 +48,15 @@ def load_workouts(gc, engine, success_msg, error_msg):
     }
     df.rename(columns=column_mapping, inplace=True)
     df['created_at'] = pd.Timestamp.now()
-    df = df[['workout_id', 'date', 'set_number', 'exercise', 'reps', 'load', 'resistance_type', 'set_type',
+
+    df = df[['workout_number', 'date', 'set_number', 'exercise', 'reps', 'load', 'resistance_type', 'set_type',
              'comments', 'workout_type', 'created_at']]
     try:
         inserted_rows = 0
         with engine.connect() as conn:
             for row in df.itertuples(index=False):
-                exists_stmt = select(workouts.c.workout_id).where(
-                    (workouts.c.workout_id == str(row.workout_id)) &
+                exists_stmt = select(workouts.c.workout_number).where(
+                    (workouts.c.workout_number == str(row.workout_number)) &
                     (workouts.c.date == str(row.date)) &
                     (workouts.c.set_number == str(row.set_number)) &
                     (workouts.c.exercise == str(row.exercise))
@@ -63,7 +64,7 @@ def load_workouts(gc, engine, success_msg, error_msg):
                 result = conn.execute(exists_stmt).fetchone()
                 if result is None:
                     ins_stmt = insert(workouts).values(
-                        workout_id=row.workout_id,
+                        workout_number=row.workout_number,
                         date=row.date,
                         set_number=row.set_number,
                         exercise=row.exercise,

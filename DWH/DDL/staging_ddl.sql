@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS staging_layer.exercise_muscle (
 );
 
 CREATE TABLE IF NOT EXISTS staging_layer.workouts(
-	workout_id VARCHAR(256),
+	workout_number VARCHAR(256),
 	"date" VARCHAR(256),
 	set_number VARCHAR(256),
 	exercise VARCHAR(256),
