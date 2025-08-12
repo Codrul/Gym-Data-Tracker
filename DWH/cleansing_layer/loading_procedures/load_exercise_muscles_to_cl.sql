@@ -52,5 +52,4 @@ BEGIN
 	END;
 $$;
 
-CALL load_exercise_muscle_to_cl();
 

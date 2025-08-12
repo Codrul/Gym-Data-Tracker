@@ -16,7 +16,7 @@ BEGIN
       resistance_category,
       created_at
     )
-    SELECT 
+    SELECT  
         nextval('cleansing_layer.resistance_id_seq') as resistance_id,
         resistance_id as resistance_src_id,
         resistance_type,
