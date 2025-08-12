@@ -35,10 +35,10 @@ CREATE TABLE IF NOT EXISTS cleansing_layer.cl_exercise_muscle(
 	muscle_role VARCHAR(256),
   	created_at TIMESTAMP
 );
-
+ 
 CREATE TABLE IF NOT EXISTS cleansing_layer.cl_workouts(
-	workout_id VARCHAR(256),
-	workout_src_id VARCHAR(256),
+	id VARCHAR(256),
+	workout_number VARCHAR(256),
 	"date" VARCHAR(256),
 	set_number VARCHAR(256),
 	exercise VARCHAR(256),

@@ -10,8 +10,8 @@ DECLARE
 BEGIN
   BEGIN
     INSERT INTO cleansing_layer.cl_workouts(
-      workout_id,
-      workout_src_id,
+      id,
+      workout_number,
       date,
       set_number,
       exercise,
@@ -24,8 +24,8 @@ BEGIN
       created_at
     )
     SELECT 
-        nextval('cleansing_layer.workout_id_seq') as workout_id,
-        workout_id as workout_src_id,
+        nextval('cleansing_layer.workout_id_seq') as id,
+        workout_number as workout_number,
         "date",
         set_number,
         exercise,
@@ -38,7 +38,7 @@ BEGIN
         now() as created_at
     FROM (
       SELECT DISTINCT 
-        w.workout_id,
+        w.workout_number,
         w."date",
         w.set_number,
         w.exercise,
@@ -53,8 +53,10 @@ BEGIN
     WHERE NOT EXISTS(
       SELECT 1 
       FROM cleansing_layer.cl_workouts tgt
-      WHERE tgt.workout_src_id = src.workout_id
-    );
+      WHERE tgt.workout_number = src.workout_number
+		AND tgt."date" = src."date"
+		AND COALESCE(TRIM(LOWER(tgt.exercise)), '') = COALESCE(TRIM(LOWER(src.exercise)), ''));
+
     GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
     RAISE NOTICE '% rows were inserted or updated into cleansing_layer.cl_workouts', v_rows_affected;
 
