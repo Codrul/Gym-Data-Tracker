@@ -1,0 +1,45 @@
+name: Pytest
+
+on: [push, pull request]
+
+jobs:
+  test-google-sheets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set Python up
+        uses: actions/setup-python@v4
+        with: 
+          python-version: 3.12
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run Google Sheets test 
+        run: |
+          pytest DWH/tests/test_connection.py --maxfail= 1 --disable-warnings -v 
+  test-db-connection:
+    runs-on: ubuntu-latest
+    steps:
+
+     - name: Checkout code
+          uses: actions/checkout@v3
+
+        - name: Set Python up
+          uses: actions/setup-python@v4
+          with: 
+            python-version: 3.12
+
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install pytest
+      - name: Run mock DB test 
+        run: |
+          pytest DWH/tests/test_db_connection.py --maxfail=1 --disable-warnings -v
