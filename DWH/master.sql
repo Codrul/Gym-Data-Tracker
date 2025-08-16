@@ -22,8 +22,14 @@ BEGIN
 	CALL clean_resistance_types();
 	CALL clean_workouts();
 
+ 	-- will need to add a mapping procedure from the cleaning layer
+		
 	-- then load to 3nf
-	
+	CALL load_exercises_to_3nf();
+	CALL load_muscles_to_3nf();
+	CALL load_resistance_types_to_3nf();
+	CALL load_exercise_muscle_to_3nf();
+	CALL load_workouts_to_3nf();
 	END;
 END;
 $$;

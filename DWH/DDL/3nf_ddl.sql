@@ -1,11 +1,11 @@
 CREATE SCHEMA IF NOT EXISTS bl_3nf;
 
 -- now creating tables
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts (
+CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts (
     id BIGINT NOT NULL,
     src_id VARCHAR(10) NOT NULL,
     workout_number INT NOT NULL,
-    "date" DATE NOT NULL,
+    date_id DATE NOT NULL,
     set_number INT NOT NULL,
     exercise_id INT NOT NULL, 
     reps NUMERIC NOT NULL,
@@ -16,37 +16,37 @@ CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts (
     "comments" TEXT NOT NULL,
     workout_type VARCHAR(10) NOT NULL,
     TA_created_at TIMESTAMP NOT NULL,
-    PRIMARY KEY(id, "date", set_number, workout_number, exercise_id),
-    UNIQUE(src_id, "date", workout_number, set_number, exercise_id)
+    PRIMARY KEY(id, date_id, set_number, workout_number, exercise_id),
+    UNIQUE(src_id, date_id, workout_number, set_number, exercise_id)
 )
-PARTITION BY RANGE ("date");
+PARTITION BY RANGE (date_id);
 
 -- creating partitions for my fact table 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts_def PARTITION OF bl_3nf.bl_workouts DEFAULT;
+CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_def PARTITION OF bl_3nf.FACT_workouts DEFAULT;
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts_june PARTITION OF bl_3nf.bl_workouts 
+CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_june PARTITION OF bl_3nf.FACT_workouts 
     FOR VALUES FROM ('2025-06-01') TO ('2025-06-30');
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts_july PARTITION OF bl_3nf.bl_workouts 
+CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_july PARTITION OF bl_3nf.FACT_workouts 
     FOR VALUES FROM ('2025-07-01') TO ('2025-07-31');
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts_august PARTITION OF bl_3nf.bl_workouts 
+CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_august PARTITION OF bl_3nf.FACT_workouts 
     FOR VALUES FROM ('2025-08-01') TO ('2025-08-31');
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts_september PARTITION OF bl_3nf.bl_workouts 
+CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_september PARTITION OF bl_3nf.FACT_workouts 
     FOR VALUES FROM ('2025-09-01') TO ('2025-09-30');
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts_october PARTITION OF bl_3nf.bl_workouts 
+CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_october PARTITION OF bl_3nf.FACT_workouts 
     FOR VALUES FROM ('2025-10-01') TO ('2025-10-31');
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts_november PARTITION OF bl_3nf.bl_workouts 
+CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_november PARTITION OF bl_3nf.FACT_workouts 
     FOR VALUES FROM ('2025-11-01') TO ('2025-11-30');
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_workouts_december PARTITION OF bl_3nf.bl_workouts 
+CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_december PARTITION OF bl_3nf.FACT_workouts 
     FOR VALUES FROM ('2025-12-01') TO ('2025-12-31');
 
 -- back to creating the other tables 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_exercises (
+CREATE TABLE IF NOT EXISTS bl_3nf.CE_exercises (
     exercise_id BIGINT UNIQUE NOT NULL,
     exercise_src_id VARCHAR(20) UNIQUE NOT NULL,
     exercise_name VARCHAR(256) NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS bl_3nf.bl_exercises (
     PRIMARY KEY(exercise_id) 
 );
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_muscles (
+CREATE TABLE IF NOT EXISTS bl_3nf.CE_muscles (
     muscle_id BIGINT UNIQUE NOT NULL,
     muscle_src_id VARCHAR(20) UNIQUE NOT NULL,
     muscle_name VARCHAR(256) NOT NULL,
@@ -67,13 +67,11 @@ CREATE TABLE IF NOT EXISTS bl_3nf.bl_muscles (
     PRIMARY KEY (muscle_id)
 );
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_exercise_muscle (
+CREATE TABLE IF NOT EXISTS bl_3nf.CE_exercise_muscle (
     exercise_id BIGINT NOT NULL,
     exercise_src_id VARCHAR(20) NOT NULL,
-    exercise_name VARCHAR(256) NOT NULL,
     muscle_id BIGINT NOT NULL,
     muscle_src_id VARCHAR(20) NOT NULL,
-    muscle_name VARCHAR(256) NOT NULL,
     muscle_role VARCHAR(256) NOT NULL,
     TA_created_at TIMESTAMP NOT NULL,
     TA_updated_at TIMESTAMP NOT NULL,
@@ -81,7 +79,7 @@ CREATE TABLE IF NOT EXISTS bl_3nf.bl_exercise_muscle (
     UNIQUE(exercise_src_id, muscle_src_id)
 );
 
-CREATE TABLE IF NOT EXISTS bl_3nf.bl_resistance_types (
+CREATE TABLE IF NOT EXISTS bl_3nf.CE_resistance_types (
     resistance_id BIGINT UNIQUE NOT NULL,
     resistance_src_id VARCHAR(20) UNIQUE NOT NULL,
     resistance_type VARCHAR(256) NOT NULL,
@@ -91,75 +89,87 @@ CREATE TABLE IF NOT EXISTS bl_3nf.bl_resistance_types (
     PRIMARY KEY(resistance_id)
 );
 
+CREATE TABLE IF NOT EXISTS bl_3nf.CE_Dates (
+    "DATE" DATE PRIMARY KEY,
+    DAY_NAME_IN_WEEK VARCHAR(15),
+    DAY_NUMBER_IN_MONTH INT,
+    CALENDAR_MONTH_NUMBER INT,
+    CALENDAR_MONTH_DESC VARCHAR(15),
+    CALENDAR_YEAR INT,
+    IS_WEEKEND VARCHAR(1)
+);
+
 -- now onto creating the indexes
--- usually PK already indexed, but ensure fast lookup by src_id for faster ETL 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_bl_resistance_types_src_id
-    ON bl_3nf.bl_resistance_types (resistance_src_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_CE_resistance_types_src_id
+    ON bl_3nf.CE_resistance_types (resistance_src_id);
    
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bl_exercise_src_id
-    ON bl_3nf.bl_exercises (exercise_src_id);
+    ON bl_3nf.CE_exercises (exercise_src_id);
 
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_bl_muscles_src_id
-    ON bl_3nf.bl_muscles (muscle_src_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_CE_muscles_src_id
+    ON bl_3nf.CE_muscles (muscle_src_id);
    
- CREATE UNIQUE INDEX IF NOT EXISTS idx_bl_exercise_muscle_src_ids
-    ON bl_3nf.bl_exercise_muscle (exercise_src_id, muscle_src_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_CE_exercise_muscle_src_ids
+    ON bl_3nf.CE_exercise_muscle (exercise_src_id, muscle_src_id);
    
-CREATE UNIQUE INDEX IF NOT EXISTS idx_bl_workouts_src_id_date_workout_set_exercise
-    ON bl_3nf.bl_workouts (src_id, "date", workout_number, set_number, exercise_id);
-   
+CREATE UNIQUE INDEX IF NOT EXISTS idx_FACT_workouts_src_id_date_workout_set_exercise
+    ON bl_3nf.FACT_workouts (src_id, date_id, workout_number, set_number, exercise_id);
 
 -- now to create the relationships 
 DO $$
 BEGIN
-
     IF NOT EXISTS (SELECT 1 FROM pg_constraint 
                    WHERE conname = 'fk_workouts_exercise' 
-                     AND conrelid = 'bl_3nf.bl_workouts'::regclass) THEN
-        ALTER TABLE bl_3nf.bl_workouts
+                     AND conrelid = 'bl_3nf.FACT_workouts'::regclass) THEN
+        ALTER TABLE bl_3nf.FACT_workouts
         ADD CONSTRAINT fk_workouts_exercise
-        FOREIGN KEY (exercise_id) REFERENCES bl_3nf.bl_exercises(exercise_id);
+        FOREIGN KEY (exercise_id) REFERENCES bl_3nf.CE_exercises(exercise_id);
     ELSE
-        RAISE NOTICE 'Foreign key fk_workouts_exercise already exists on bl_workouts.';
+        RAISE NOTICE 'Foreign key fk_workouts_exercise already exists on FACT_workouts.';
     END IF;
-
 
     IF NOT EXISTS (SELECT 1 FROM pg_constraint 
                    WHERE conname = 'fk_exercise_muscle_exercise' 
-                     AND conrelid = 'bl_3nf.bl_exercise_muscle'::regclass) THEN
-        ALTER TABLE bl_3nf.bl_exercise_muscle
+                     AND conrelid = 'bl_3nf.CE_exercise_muscle'::regclass) THEN
+        ALTER TABLE bl_3nf.CE_exercise_muscle
         ADD CONSTRAINT fk_exercise_muscle_exercise
-        FOREIGN KEY (exercise_id) REFERENCES bl_3nf.bl_exercises(exercise_id);
+        FOREIGN KEY (exercise_id) REFERENCES bl_3nf.CE_exercises(exercise_id);
     ELSE
-        RAISE NOTICE 'Foreign key fk_exercise_muscle_exercise already exists on bl_exercise_muscle.';
+        RAISE NOTICE 'Foreign key fk_exercise_muscle_exercise already exists on CE_exercise_muscle.';
     END IF;
-
 
     IF NOT EXISTS (SELECT 1 FROM pg_constraint 
                    WHERE conname = 'fk_exercise_muscle_muscle' 
-                     AND conrelid = 'bl_3nf.bl_exercise_muscle'::regclass) THEN
-        ALTER TABLE bl_3nf.bl_exercise_muscle
+                     AND conrelid = 'bl_3nf.CE_exercise_muscle'::regclass) THEN
+        ALTER TABLE bl_3nf.CE_exercise_muscle
         ADD CONSTRAINT fk_exercise_muscle_muscle
-        FOREIGN KEY (muscle_id) REFERENCES bl_3nf.bl_muscles(muscle_id);
+        FOREIGN KEY (muscle_id) REFERENCES bl_3nf.CE_muscles(muscle_id);
     ELSE
-        RAISE NOTICE 'Foreign key fk_exercise_muscle_muscle already exists on bl_exercise_muscle.';
+        RAISE NOTICE 'Foreign key fk_exercise_muscle_muscle already exists on CE_exercise_muscle.';
     END IF;
-
 
     IF NOT EXISTS (SELECT 1 FROM pg_constraint 
                    WHERE conname = 'fk_workouts_resistance' 
-                     AND conrelid = 'bl_3nf.bl_workouts'::regclass) THEN
-        ALTER TABLE bl_3nf.bl_workouts
+                     AND conrelid = 'bl_3nf.FACT_workouts'::regclass) THEN
+        ALTER TABLE bl_3nf.FACT_workouts
         ADD CONSTRAINT fk_workouts_resistance
-        FOREIGN KEY (resistance_id) REFERENCES bl_3nf.bl_resistance_types(resistance_id);
+        FOREIGN KEY (resistance_id) REFERENCES bl_3nf.CE_resistance_types(resistance_id);
     ELSE
-        RAISE NOTICE 'Foreign key fk_workouts_resistance already exists on bl_workouts.';
+        RAISE NOTICE 'Foreign key fk_workouts_resistance already exists on FACT_workouts.';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint 
+                   WHERE conname = 'fk_workouts_dates' 
+                     AND conrelid = 'bl_3nf.FACT_workouts'::regclass) THEN
+        ALTER TABLE bl_3nf.FACT_workouts
+        ADD CONSTRAINT fk_workouts_dates
+        FOREIGN KEY (date_id) REFERENCES bl_3nf.CE_Dates("DATE");
+    ELSE
+        RAISE NOTICE 'Foreign key fk_workouts_dates already exists on FACT_workouts.';
     END IF;
 END $$;
 
-
--- now generating sequences as we will need that as well 
+-- now generating sequences
 CREATE SEQUENCE IF NOT EXISTS bl_3nf.workout_id_seq
 START WITH 1
 INCREMENT BY 1;
