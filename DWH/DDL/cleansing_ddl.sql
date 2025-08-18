@@ -55,6 +55,12 @@ CREATE TABLE IF NOT EXISTS cleansing_layer.cl_workouts(
   	created_at TIMESTAMP
 );
 
+ALTER TABLE cleansing_layer.cl_workouts 
+ADD COLUMN IF NOT EXISTS exercise_id VARCHAR(256);
+
+ALTER TABLE cleansing_layer.cl_workouts
+ADD COLUMN IF NOT EXISTS resistance_id VARCHAR(256);
+
 -- now creating some ID sequences
 CREATE SEQUENCE IF NOT EXISTS cleansing_layer.exercise_id_seq
 START WITH 1 

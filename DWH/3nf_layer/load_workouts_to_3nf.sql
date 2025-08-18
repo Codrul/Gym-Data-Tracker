@@ -1,6 +1,3 @@
--- this procedure will need to be worked on as I need a mapping table
-
-
 CREATE OR REPLACE PROCEDURE load_workouts_to_3nf()
 LANGUAGE plpgsql
 AS $$
@@ -31,25 +28,28 @@ BEGIN
     )
     SELECT 
         nextval('bl_3nf.workout_id_seq') AS id,
-        w.id as src_id,
-        w.workout_number as workout_number,
-        w.date_id as date_id,
-        w.set_number as set_number,
-        e.exercise_id as exercise_id,
-        w.reps as reps,
-        w."load" as "load",
-        w."unit" as "unit",
-        r.resistance_id as resistance_id,
-        w.set_type as set_type,
-        w."comments" as "comments",
-        w.workout_type as workout_type,
-        CURRENT_TIME as ta_created_at
+		COALESCE(w.id, 'N/A') AS src_id,
+		COALESCE(w.workout_number::INT, -1) AS workout_number,
+		COALESCE(w."date"::DATE, DATE '1900-01-01') AS date_id,
+		COALESCE(w.set_number::INT, -1) AS set_number,
+		COALESCE(e.exercise_id::BIGINT, -1) AS exercise_id,
+		COALESCE(w.reps::NUMERIC, -1) AS reps,
+		COALESCE(w."load"::NUMERIC, -1) AS "load",
+		COALESCE(w."unit", 'N/A') AS "unit",
+		COALESCE(r.resistance_id::BIGINT, -1) AS resistance_id,
+		COALESCE(w.set_type, 'N/A') AS set_type,
+		COALESCE(w."comments", 'N/A') AS "comments",
+		COALESCE(w.workout_type, 'N/A') AS workout_type,
+        CURRENT_TIMESTAMP AS ta_created_at
     FROM cleansing_layer.cl_workouts w 
-    LEFT JOIN bl_3nf.ce_exercises e ON e.exercise_src_id = w.exercise_id
-    LEFT JOIN bl_3nf.ce_resistance_types r ON r.resistance_src_id = r.resistance_id
+    LEFT JOIN bl_3nf.ce_exercises e 
+           ON e.exercise_src_id = w.exercise_id
+    LEFT JOIN bl_3nf.ce_resistance_types r 
+           ON r.resistance_src_id = w.resistance_id
     WHERE NOT EXISTS (
-        SELECT 1 FROM bl_3nf.fact_workouts tgt
-        WHERE tgt.src_id = w.id 
+        SELECT 1 
+        FROM bl_3nf.fact_workouts tgt
+        WHERE tgt.src_id = w.id
     );
 
     GET DIAGNOSTICS v_rows_affected = ROW_COUNT;

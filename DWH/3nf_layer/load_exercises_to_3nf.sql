@@ -11,7 +11,7 @@ BEGIN
     INSERT INTO bl_3nf.CE_exercises
     (exercise_id, exercise_src_id, exercise_name, exercise_movement_type, exercise_bodysplit, TA_created_at, TA_updated_at)
     VALUES 
-    (-1, '-1', 'N/A', 'N/A', 'N/A', CURRENT_DATE, CURRENT_DATE)
+    (-1, '-1', 'N/A', 'N/A', 'N/A', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     ON CONFLICT (exercise_id) DO NOTHING;
     
 

@@ -21,29 +21,6 @@ CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts (
 )
 PARTITION BY RANGE (date_id);
 
--- creating partitions for my fact table 
-CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_def PARTITION OF bl_3nf.FACT_workouts DEFAULT;
-
-CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_june PARTITION OF bl_3nf.FACT_workouts 
-    FOR VALUES FROM ('2025-06-01') TO ('2025-06-30');
-
-CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_july PARTITION OF bl_3nf.FACT_workouts 
-    FOR VALUES FROM ('2025-07-01') TO ('2025-07-31');
-
-CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_august PARTITION OF bl_3nf.FACT_workouts 
-    FOR VALUES FROM ('2025-08-01') TO ('2025-08-31');
-
-CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_september PARTITION OF bl_3nf.FACT_workouts 
-    FOR VALUES FROM ('2025-09-01') TO ('2025-09-30');
-
-CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_october PARTITION OF bl_3nf.FACT_workouts 
-    FOR VALUES FROM ('2025-10-01') TO ('2025-10-31');
-
-CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_november PARTITION OF bl_3nf.FACT_workouts 
-    FOR VALUES FROM ('2025-11-01') TO ('2025-11-30');
-
-CREATE TABLE IF NOT EXISTS bl_3nf.FACT_workouts_december PARTITION OF bl_3nf.FACT_workouts 
-    FOR VALUES FROM ('2025-12-01') TO ('2025-12-31');
 
 -- back to creating the other tables 
 CREATE TABLE IF NOT EXISTS bl_3nf.CE_exercises (
@@ -185,3 +162,55 @@ INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS bl_3nf.resistance_id_seq
 START WITH 1
 INCREMENT BY 1;
+
+
+-- procedure to create partitions for workouts 
+
+CREATE OR REPLACE PROCEDURE bl_3nf.manage_fact_workouts_partitions()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_start_date DATE := DATE '2025-07-01';
+    v_end_date DATE := DATE '2030-12-31';
+    v_current_start DATE;
+    v_current_end DATE;
+    v_partition_name TEXT;
+BEGIN
+    -- Ensure the default partition exists
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_tables 
+        WHERE schemaname = 'bl_3nf' AND tablename = 'fact_workouts_default'
+    ) THEN
+        EXECUTE format(
+            'CREATE TABLE bl_3nf.fact_workouts_default PARTITION OF bl_3nf.fact_workouts DEFAULT;'
+        );
+        RAISE NOTICE 'Created default partition for fallback rows';
+    END IF;
+
+    -- Loop through months 
+    v_current_start := v_start_date;
+    WHILE v_current_start <= v_end_date LOOP
+        v_current_end := (v_current_start + INTERVAL '1 month') - INTERVAL '1 day';
+        v_partition_name := 'fact_workouts_' || to_char(v_current_start, 'YYYY_MM');
+
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_tables 
+            WHERE schemaname = 'bl_3nf' AND tablename = v_partition_name
+        ) THEN
+            EXECUTE format(
+                'CREATE TABLE bl_3nf.%I PARTITION OF bl_3nf.fact_workouts 
+                 FOR VALUES FROM (%L) TO (%L);',
+                v_partition_name,
+                v_current_start,
+                v_current_end + INTERVAL '1 day'  
+            );
+            RAISE NOTICE 'Created partition: %', v_partition_name;
+        END IF;
+
+        -- Move to next month
+        v_current_start := v_current_start + INTERVAL '1 month';
+    END LOOP;
+END;
+$$;
+
+

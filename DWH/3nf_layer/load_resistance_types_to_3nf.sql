@@ -11,7 +11,7 @@ BEGIN
     INSERT INTO bl_3nf.CE_resistance_types
     (resistance_id, resistance_src_id, resistance_type, resistance_category, TA_created_at, TA_updated_at)
     VALUES 
-    (-1, '-1', 'N/A', 'N/A', CURRENT_DATE, CURRENT_DATE)
+    (-1, '-1', 'N/A', 'N/A', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     ON CONFLICT (resistance_id) DO NOTHING;
     
 

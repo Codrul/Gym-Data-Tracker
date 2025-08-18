@@ -29,6 +29,8 @@ BEGIN
 	CALL load_muscles_to_3nf();
 	CALL load_resistance_types_to_3nf();
 	CALL load_exercise_muscle_to_3nf();
+	CALL load_dates();
+	CALL bl_3nf.manage_fact_workouts_partitions();
 	CALL load_workouts_to_3nf();
 	END;
 END;

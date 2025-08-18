@@ -2,13 +2,14 @@ CREATE OR REPLACE PROCEDURE clean_workouts()
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    rows_deleted             INT := 0;
-    rows_updated_date        INT := 0;
-    rows_updated_load_dot    INT := 0;
-    rows_updated_special_chars INT := 0;
-    rows_updated_capitalize  INT := 0;
-    rows_updated_load_unit   INT := 0;
-    total_changed           INT := 0;
+    rows_deleted            	INT := 0;
+    rows_updated_date        	INT := 0;
+    rows_updated_load_dot    	INT := 0;
+    rows_updated_special_chars	INT := 0;
+    rows_updated_capitalize  	INT := 0;
+    rows_updated_load_unit   	INT := 0;
+	rows_updated_id				INT :=0;
+    total_changed           	INT := 0;
 BEGIN
     -- deduplicate rows
     WITH duplicates AS (
@@ -64,16 +65,27 @@ BEGIN
     GET DIAGNOSTICS rows_updated_special_chars = ROW_COUNT;
 
     -- trim spaces and capitalize first letter
-    UPDATE cleansing_layer.cl_workouts cw
-    SET exercise = regexp_replace(
-                       upper(substr(cw.exercise, 1, 1)) || lower(substr(cw.exercise, 2)),
-                       '\s+', ' ', 'g'
-                   )
-    WHERE exercise IS NOT NULL
-      AND exercise <> regexp_replace(
-                          upper(substr(cw.exercise, 1, 1)) || lower(substr(cw.exercise, 2)),
-                          '\s+', ' ', 'g'
-                      );
+  	UPDATE cleansing_layer.cl_workouts cw
+	SET exercise = regexp_replace(
+	                   upper(substr(cw.exercise, 1, 1)) || lower(substr(cw.exercise, 2)),
+	                   '\s+', ' ', 'g'
+	               ),
+	    resistance_type = regexp_replace(
+	                   upper(substr(cw.resistance_type, 1, 1)) || lower(substr(cw.resistance_type, 2)),
+	                   '\s+', ' ', 'g'
+	               )
+	WHERE (exercise IS NOT NULL
+	       AND exercise <> regexp_replace(
+	                           upper(substr(cw.exercise, 1, 1)) || lower(substr(cw.exercise, 2)),
+	                           '\s+', ' ', 'g'
+	                       ))
+	   OR (resistance_type IS NOT NULL
+	       AND resistance_type <> regexp_replace(
+	                           upper(substr(cw.resistance_type, 1, 1)) || lower(substr(cw.resistance_type, 2)),
+	                           '\s+', ' ', 'g'
+	                       ));
+
+
     GET DIAGNOSTICS rows_updated_capitalize = ROW_COUNT;
 
     -- separate load and unit
@@ -87,12 +99,37 @@ BEGIN
     WHERE "load" ~* '(kg|lbs)';
     GET DIAGNOSTICS rows_updated_load_unit = ROW_COUNT;
 
-    total_changed := rows_deleted + rows_updated_date + rows_updated_load_dot
-                   + rows_updated_special_chars + rows_updated_capitalize + rows_updated_load_unit;
+	UPDATE cleansing_layer.cl_workouts w
+	SET exercise_id = e.exercise_id
+	FROM cleansing_layer.cl_exercises e
+	WHERE w.exercise = e.exercise_name
+	  AND (w.exercise_id IS NULL OR w.exercise_id = '-1');
+	
+	UPDATE cleansing_layer.cl_workouts w
+	SET resistance_id = r.resistance_id
+	FROM cleansing_layer.cl_resistance_types r
+	WHERE w.resistance_type = r.resistance_type
+	  AND (w.resistance_id IS NULL OR w.resistance_id = '-1');
 
-    RAISE NOTICE '[cl_workouts] Rows deleted: %, Rows updated (date): %, (load_dot): %, (special_chars): %, (capitalize): %, (load_unit): %, Total changed: %',
+	-- in case there are left non-coalesce values
+	UPDATE cleansing_layer.cl_workouts
+	SET 
+	    reps = '0'
+	WHERE reps IS NULL OR TRIM(reps) = '';
+
+	UPDATE cleansing_layer.cl_workouts
+	SET 
+	    "load" = '0'
+	WHERE "load" IS NULL OR TRIM("load") = '';
+	
+	GET DIAGNOSTICS rows_updated_id = ROW_COUNT;
+
+    total_changed := rows_deleted + rows_updated_date + rows_updated_load_dot
+                   + rows_updated_special_chars + rows_updated_capitalize + rows_updated_load_unit + rows_updated_id;
+
+    RAISE NOTICE '[cl_workouts] Rows deleted: %, Rows updated (date): %, (load_dot): %, (special_chars): %, (capitalize): %, (load_unit): %, (ID updates): %, Total changed: %',
                  rows_deleted, rows_updated_date, rows_updated_load_dot, rows_updated_special_chars,
-                 rows_updated_capitalize, rows_updated_load_unit, total_changed;
+                 rows_updated_capitalize, rows_updated_load_unit, rows_updated_id, total_changed;
 
 END;
 $$;
