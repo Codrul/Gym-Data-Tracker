@@ -5,37 +5,37 @@ DECLARE
 	v_rows_affected INT := 0;
 	v_message_text TEXT;
 	v_detail_text TEXT;
-  v_hint_text TEXT;
+    v_hint_text TEXT;
 	v_status_code INT;
 BEGIN
   BEGIN
     INSERT INTO cleansing_layer.cl_workouts(
       id,
       workout_number,
-      date,
+      "date",
       set_number,
       exercise,
       reps,
-      load,
+      "load",
       resistance_type,
       set_type,
-      comments,
+      "comments",
       workout_type,
       created_at
     )
     SELECT 
-        nextval('cleansing_layer.workout_id_seq') as id,
-        workout_number as workout_number,
-        "date",
-        set_number,
-        exercise,
-        reps,
-        load,
-        resistance_type,
-        set_type,
-        comments,
-        workout_type,
-        now() as created_at
+        COALESCE(nextval('cleansing_layer.workout_id_seq'), '-1') AS id,
+        COALESCE(workout_number::INT, '-1') AS workout_number,
+        COALESCE("date"::DATE, DATE '1900-01-01') AS date,
+        COALESCE(set_number::INT, '-1') AS set_number,
+        COALESCE(exercise, 'N/A') AS exercise,
+        COALESCE(reps::NUMERIC, '0') AS reps,
+        COALESCE("load"::NUMERIC, '-1') AS load,
+        COALESCE(resistance_type, 'N/A') AS resistance_type,
+        COALESCE(set_type, 'N/A') AS set_type,
+        COALESCE("comments", 'N/A') AS comments,
+        COALESCE(workout_type, 'N/A') AS workout_type,
+        now() AS created_at
     FROM (
       SELECT DISTINCT 
         w.workout_number,
@@ -55,10 +55,11 @@ BEGIN
       FROM cleansing_layer.cl_workouts tgt
       WHERE tgt.workout_number = src.workout_number
 		AND tgt."date" = src."date"
-		AND COALESCE(TRIM(LOWER(tgt.exercise)), '') = COALESCE(TRIM(LOWER(src.exercise)), ''));
+		AND COALESCE(TRIM(LOWER(tgt.exercise)), '') = COALESCE(TRIM(LOWER(src.exercise)), '')
+    );
 
     GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
-    RAISE NOTICE '% rows were inserted or updated into cleansing_layer.cl_workouts', v_rows_affected;
+    RAISE NOTICE '% rows were inserted into cleansing_layer.cl_workouts', v_rows_affected;
 
   EXCEPTION
     WHEN OTHERS THEN 
@@ -66,11 +67,10 @@ BEGIN
         v_message_text = MESSAGE_TEXT,
         v_detail_text = PG_EXCEPTION_DETAIL,
         v_hint_text = PG_EXCEPTION_HINT;
-      v_status_code := 2; -- error status code ofc 
+      v_status_code := 2; -- error status code
       RAISE NOTICE 'Error occured: %, Details: %, Hint: %', v_message_text, v_detail_text, v_hint_text;
 	END;
-	END;
+END;
 $$;
 
 CALL load_workouts_to_cl();
-
