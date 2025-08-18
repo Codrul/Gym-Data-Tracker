@@ -1,0 +1,55 @@
+name: Pytest
+
+on: [push, pull_request]
+
+jobs:
+  test-google-sheets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with: 
+          python-version: 3.12
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install gspread google-auth sqlalchemy psycopg2-binary pytest
+
+      - name: Save API_KEY secret to file
+        if: ${{ env.API_KEY }}  
+        run: |
+          echo "${{ secrets.API_KEY }}" > ./api_key.json
+
+      - name: Run Google Sheets test
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+        run: |
+          pytest DWH/tests/test_staging/test_connection.py --maxfail=1 --disable-warnings -v
+
+  test-db-connection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with: 
+          python-version: 3.12
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install sqlalchemy psycopg2-binary pytest
+
+      - name: Run mock DB test
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          pytest DWH/tests/test_staging/test_db_connection.py --maxfail=1 --disable-warnings -v
