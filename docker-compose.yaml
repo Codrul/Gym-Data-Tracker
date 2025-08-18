@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  airflow:
+    image: apache/airflow:2.7.1
+    container_name: airflow
+    restart: always
+    env_file:
+      - .env 
+    volumes:
+      - /c/Users/aditz/Gym_Data_Tracker/dags:/usr/local/airflow/dags
+      - ./logs:/usr/local/airflow/logs
+
+    ports:
+      - "8080:8080"
+    networks:
+      - airflow-net
+networks:
+  airflow-net:
+    driver: bridge
