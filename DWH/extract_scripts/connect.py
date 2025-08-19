@@ -28,8 +28,14 @@ def connect_db():
         with open(r'C:\\Users\\aditz\\Gym_Data_Tracker\\APIs\\pgpass.txt', 'r') as f:
             db_password = f.read().strip()
 
+    # Decide host based on environment
+    if os.environ.get("IN_DOCKER") == "1":
+        db_host = "host.docker.internal"  # Docker container connecting to host
+    else:
+        db_host = "localhost"  # Running locally
+
     # PostgreSQL connection
     engine = create_engine(
-        f'postgresql+psycopg2://postgres:{db_password}@localhost:5432/gym_data'
+        f'postgresql+psycopg2://postgres:{db_password}@{db_host}:5432/gym_data'
     )
     return engine

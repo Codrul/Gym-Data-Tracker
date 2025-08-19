@@ -53,7 +53,10 @@ def load_workouts(gc, engine, success_msg, error_msg):
              'comments', 'workout_type', 'created_at']]
     try:
         inserted_rows = 0
-        with engine.connect() as conn:
+        with engine.begin() as conn:
+            db_info = conn.execute("SELECT current_database(), current_schema()").fetchall()
+            print("DB connection info:", db_info)
+            print("Rows to insert:", df.shape[0])
             for row in df.itertuples(index=False):
                 exists_stmt = select(workouts.c.workout_number).where(
                     (workouts.c.workout_number == str(row.workout_number)) &
@@ -78,7 +81,6 @@ def load_workouts(gc, engine, success_msg, error_msg):
                     )
                     conn.execute(ins_stmt)
                     inserted_rows += 1
-                conn.commit()
         success_msg.append(f"{inserted_rows} rows have been loaded into *staging_layer.workouts*")
         return
     except Exception as e:
