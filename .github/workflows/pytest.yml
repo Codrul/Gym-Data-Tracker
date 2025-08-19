@@ -17,6 +17,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install apache-airflow==2.10.2
           pip install -r requirements.txt
           pip install gspread google-auth sqlalchemy psycopg2-binary pytest
 
@@ -46,6 +47,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install apache-airflow==2.10.2
           pip install sqlalchemy psycopg2-binary pytest
 
       - name: Run mock DB test

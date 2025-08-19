@@ -68,7 +68,6 @@ def load_workouts(gc, engine, success_msg, error_msg):
         with engine.begin() as conn:
             db_info = conn.execute("SELECT current_database(), current_schema()").fetchall()
 
-            # 🔎 explicit print outside try/except (shows in stdout + Airflow logs)
             print(f"[extract_workouts] Connected to database/schema: {db_info}")
 
             logger.info("[extract_workouts] DB connection info: %s", db_info)
