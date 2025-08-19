@@ -1,62 +1,79 @@
 import pandas as pd
+import logging
 from sqlalchemy import (
     MetaData, Table, Column,
     select, insert, String, DateTime
 )
+
 metadata = MetaData()
 
 workouts = Table(
-    'workouts', metadata,
-    Column('workout_number', String, primary_key=True),
-    Column('date', String),
-    Column('set_number', String),
-    Column('exercise', String),
-    Column('reps', String),
-    Column('load', String),
-    Column('resistance_type', String),
-    Column('set_type', String),
-    Column('comments', String),
-    Column('workout_type', String),
-    Column('created_at', DateTime),
-    schema='staging_layer'
+    "workouts", metadata,
+    Column("workout_number", String, primary_key=True),
+    Column("date", String),
+    Column("set_number", String),
+    Column("exercise", String),
+    Column("reps", String),
+    Column("load", String),
+    Column("resistance_type", String),
+    Column("set_type", String),
+    Column("comments", String),
+    Column("workout_type", String),
+    Column("created_at", DateTime),
+    schema="staging_layer"
 )
+
+# airflow/task logger
+logger = logging.getLogger("airflow.task")
 
 
 def load_workouts(gc, engine, success_msg, error_msg):
     try:
+        logger.info("[extract_workouts] Connecting to Google Sheets...")
         spreadsheet = gc.open_by_key(
-            '1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ'
+            "1OiufKuY1WB_-tzfvKWZh9OHeCCEX81jQ1KHuNE5lZsQ"
         )
-        worksheet = spreadsheet.worksheet('Workouts')
+        worksheet = spreadsheet.worksheet("Workouts")
         workouts_table = worksheet.get_all_records()
+        logger.info("[extract_workouts] Retrieved %s rows from Google Sheets", len(workouts_table))
     except Exception as e:
-        error_msg.append(f'[extract_workouts] Error {e} occurred. Failed to load from Google Sheets')
+        error_text = f"[extract_workouts] Error {e} occurred. Failed to load from Google Sheets"
+        error_msg.append(error_text)
+        logger.exception(error_text)
         return
 
     df = pd.DataFrame(workouts_table)
     column_mapping = {
-        'Workout number': 'workout_number',
-        'Date': 'date',
-        'Set': 'set_number',
-        'Exercise': 'exercise',
-        'Reps': 'reps',
-        'Load': 'load',
-        'Resistance type': 'resistance_type',
-        'Set type': 'set_type',
-        'Comments': 'comments',
-        'Workout type': 'workout_type'
+        "Workout number": "workout_number",
+        "Date": "date",
+        "Set": "set_number",
+        "Exercise": "exercise",
+        "Reps": "reps",
+        "Load": "load",
+        "Resistance type": "resistance_type",
+        "Set type": "set_type",
+        "Comments": "comments",
+        "Workout type": "workout_type"
     }
     df.rename(columns=column_mapping, inplace=True)
-    df['created_at'] = pd.Timestamp.now()
+    df["created_at"] = pd.Timestamp.now()
 
-    df = df[['workout_number', 'date', 'set_number', 'exercise', 'reps', 'load', 'resistance_type', 'set_type',
-             'comments', 'workout_type', 'created_at']]
+    df = df[[
+        "workout_number", "date", "set_number", "exercise", "reps", "load",
+        "resistance_type", "set_type", "comments", "workout_type", "created_at"
+    ]]
+
     try:
         inserted_rows = 0
         with engine.begin() as conn:
             db_info = conn.execute("SELECT current_database(), current_schema()").fetchall()
-            print("DB connection info:", db_info)
-            print("Rows to insert:", df.shape[0])
+
+            # 🔎 explicit print outside try/except (shows in stdout + Airflow logs)
+            print(f"[extract_workouts] Connected to database/schema: {db_info}")
+
+            logger.info("[extract_workouts] DB connection info: %s", db_info)
+            logger.info("[extract_workouts] Rows to insert: %s", df.shape[0])
+
             for row in df.itertuples(index=False):
                 exists_stmt = select(workouts.c.workout_number).where(
                     (workouts.c.workout_number == str(row.workout_number)) &
@@ -65,6 +82,7 @@ def load_workouts(gc, engine, success_msg, error_msg):
                     (workouts.c.exercise == str(row.exercise))
                 )
                 result = conn.execute(exists_stmt).fetchone()
+
                 if result is None:
                     ins_stmt = insert(workouts).values(
                         workout_number=row.workout_number,
@@ -81,7 +99,14 @@ def load_workouts(gc, engine, success_msg, error_msg):
                     )
                     conn.execute(ins_stmt)
                     inserted_rows += 1
-        success_msg.append(f"{inserted_rows} rows have been loaded into *staging_layer.workouts*")
+
+        success_text = f"{inserted_rows} rows have been loaded into *staging_layer.workouts*"
+        success_msg.append(success_text)
+        logger.info(success_text)
         return
     except Exception as e:
-        error_msg.append(f'Error {e} occurred. Could not insert into workouts')
+        error_text = f"[extract_workouts] Error {e} occurred. Could not insert into workouts"
+        error_msg.append(error_text)
+        logger.exception(error_text)
+        return
+
