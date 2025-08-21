@@ -22,7 +22,7 @@
 > process, much like many other activities. 
 > 
 > ## Project overview
-> ![Project Overview](Images/Project_overview_v1.png)
+> ![Project Overview](Images/Project_overview.png)
 
 >> ## Chapter 1: _Data Modeling_
 > ### The Conceptual Model
@@ -132,7 +132,7 @@
 > 
 > I started out by learning how to interact with Google's API's and read from the google sheet. At first I thought about 
 > ordering my workouts excel sheets as if one workout would be 1 table, but that would create problems when trying to 
-> read from it. Currently it is formatted like a fact table, but without the ID's mapped because no user without OCD
+> read from it. Currently it is formatted like a fact table, but without the ID's mapped because no user (myself as well)
 > would sit and fill out ID's by hand on their phone. 
 > 
 > Afterwards, it was easy to connect to my Postgres database. 
@@ -304,3 +304,24 @@
 > 
 > A key advantage of this testing strategy is its portability. I can run the tests locally with the same environment variables that CI/CD pipelines use. This consistency reduces debugging overhead and ensures that the pipeline behaves predictably in every scenario.
 > 
+>> ## Chapter 6: _Airflow, DAGs and Docker Containers_
+> 
+> Now I had to choose how I would orchestrate this pipeline so that I do not have to manually refresh my database all 
+> the time. 
+> I decided to go with Airflow as it is the industry standard and I used it before. The problem was that I am a Windows 
+> user and Airflow is not compatible with this OS. I pondered about whether to install Airflow on WSL or to have it inside 
+> of a Docker container. For simplicity I could have used it in WSL, but I wanted to practice managing Docker containers 
+> so for the sake of some DevOps work and some little networking I went with Airflow on a Docker container. 
+> 
+ > Once I knew Airflow was the way to go, I had to figure out how to actually set up my DAGs so that I didn’t have 
+> to keep running things by hand. I started simple — my first DAG was just about refreshing the database. Normally 
+> I’d connect to Postgres and run stored procedures myself, but with Airflow I could use the PostgresOperator 
+> and let it do the job for me on a schedule. It felt pretty cool watching it happen automatically the first time.  
+> 
+> After that, I wanted to deal with Power BI. I didn’t want my reports showing old data while the database was 
+> already updated. So I built another DAG that kicks in right after the database DAG finishes. That DAG calls 
+> the Power BI REST API and tells it to refresh the dataset. This way, Power BI only refreshes when the data 
+> is actually ready — no more guessing or waiting.  
+> 
+> > ## Chapter 7: _Power BI, analytics and reports_ 
+> **this is currently in progress**
