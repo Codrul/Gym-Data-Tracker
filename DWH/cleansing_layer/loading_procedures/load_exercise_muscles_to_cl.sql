@@ -64,7 +64,7 @@ BEGIN
         v_detail_text = PG_EXCEPTION_DETAIL,
         v_hint_text = PG_EXCEPTION_HINT;
       v_status_code := 2; -- error status code ofc 
-      RAISE NOTICE 'Error occured: %, Details: %, Hint: %', v_message_text, v_detail_text, v_hint_text;
+      RAISE EXCEPTION'Error occured: %, Details: %, Hint: %', v_message_text, v_detail_text, v_hint_text;
 	END;
 	END;
 $$;
