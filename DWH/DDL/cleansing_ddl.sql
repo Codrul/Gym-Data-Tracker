@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS cleansing_layer.cl_exercises(
 	exercise_name VARCHAR(256),
 	exercise_movement_type VARCHAR(256),
 	exercise_bodysplit VARCHAR(256),
-  	created_at TIMESTAMP
+  	created_at TIMESTAMP,
+  	updated_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS cleansing_layer.cl_muscles(
@@ -14,7 +15,8 @@ CREATE TABLE IF NOT EXISTS cleansing_layer.cl_muscles(
 	muscle_src_id VARCHAR(256),
 	muscle_name VARCHAR(256),
 	muscle_group VARCHAR(256),
- 	created_at TIMESTAMP
+ 	created_at TIMESTAMP,
+  	updated_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS cleansing_layer.cl_resistance_types(
@@ -22,20 +24,20 @@ CREATE TABLE IF NOT EXISTS cleansing_layer.cl_resistance_types(
 	resistance_src_id VARCHAR(256),
 	resistance_type VARCHAR(256),
 	resistance_category VARCHAR(256),
-  	created_at TIMESTAMP
+  	created_at TIMESTAMP,
+  	updated_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS cleansing_layer.cl_exercise_muscle(
 	exercise_id VARCHAR(256),
-	exercise_name VARCHAR(256),
-	muscle_id VARCHAR(256),
 	exercise_src_id VARCHAR(256),
 	exercise_name VARCHAR(256),
 	muscle_id VARCHAR(256),
 	muscle_src_id VARCHAR(256),
 	muscle_name VARCHAR(256),
 	muscle_role VARCHAR(256),
-  	created_at TIMESTAMP
+  	created_at TIMESTAMP,
+  	updated_at TIMESTAMP
 );
 
 
@@ -52,14 +54,11 @@ CREATE TABLE IF NOT EXISTS cleansing_layer.cl_workouts(
 	set_type VARCHAR(256),
 	"comments" VARCHAR(256), 
 	workout_type VARCHAR(256),
+	exercise_id VARCHAR(256),
+	resistance_id VARCHAR(256),
   	created_at TIMESTAMP
 );
 
-ALTER TABLE cleansing_layer.cl_workouts 
-ADD COLUMN IF NOT EXISTS exercise_id VARCHAR(256);
-
-ALTER TABLE cleansing_layer.cl_workouts
-ADD COLUMN IF NOT EXISTS resistance_id VARCHAR(256);
 
 -- now creating some ID sequences
 CREATE SEQUENCE IF NOT EXISTS cleansing_layer.exercise_id_seq
