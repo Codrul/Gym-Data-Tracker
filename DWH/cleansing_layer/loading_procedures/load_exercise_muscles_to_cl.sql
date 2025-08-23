@@ -3,12 +3,29 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
 	v_rows_affected INT := 0;
+	v_rows_updated INT := 0;
 	v_message_text TEXT;
 	v_detail_text TEXT;
-  v_hint_text TEXT;
+  	v_hint_text TEXT;
 	v_status_code INT;
 BEGIN
   BEGIN
+	UPDATE cleansing_layer.cl_exercise_muscle tgt
+	SET
+	    exercise_name = em.exercise_name,
+	    muscle_name   = em.muscle_name,
+	    muscle_role   = em.muscle_role,
+	    updated_at    = now()
+	FROM staging_layer.exercise_muscle em
+	JOIN cleansing_layer.cl_exercises e ON em.exercise_id = e.exercise_src_id
+	JOIN cleansing_layer.cl_muscles m ON em.muscle_id = m.muscle_src_id
+	WHERE tgt.exercise_src_id = e.exercise_src_id
+	  AND tgt.muscle_src_id = m.muscle_src_id
+	  AND (tgt.exercise_name IS DISTINCT FROM em.exercise_name
+	       OR tgt.muscle_name IS DISTINCT FROM em.muscle_name
+	       OR tgt.muscle_role IS DISTINCT FROM em.muscle_role);
+	GET DIAGNOSTICS v_rows_updated = ROW_COUNT;
+
     INSERT INTO cleansing_layer.cl_exercise_muscle(
     exercise_id,
     exercise_src_id,
@@ -21,12 +38,12 @@ BEGIN
     )
     SELECT DISTINCT
       e.exercise_id, 
-      em.exercise_id as exercise_src_id,
-      em.exercise_name,
+      COALESCE(em.exercise_id, '-1') as exercise_src_id,
+      COALESCE(em.exercise_name, 'N/A'), 
       m.muscle_id,
-      em.muscle_id as muscle_src_id,
-      em.muscle_name,
-      em.muscle_role,
+      COALESCE(em.muscle_id, '-1') as muscle_src_id,
+      COALESCE(em.muscle_name, 'N/A'),
+      COALESCE(em.muscle_role, 'N/A'),
       now() as created_at
     FROM staging_layer.exercise_muscle em
     JOIN cleansing_layer.cl_exercises e ON em.exercise_id = e.exercise_src_id
@@ -38,7 +55,7 @@ BEGIN
       AND tgt.muscle_src_id = m.muscle_src_id
     );
     GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
-    RAISE NOTICE '% rows were inserted or updated into cleansing_layer.cl_exercise_muscle', v_rows_affected;
+    RAISE NOTICE '% rows were inserted and % updated into cleansing_layer.cl_exercise_muscle', v_rows_affected, v_rows_updated;
 
   EXCEPTION
     WHEN OTHERS THEN 
