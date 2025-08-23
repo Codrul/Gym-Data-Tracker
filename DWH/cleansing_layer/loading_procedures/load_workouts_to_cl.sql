@@ -25,15 +25,15 @@ BEGIN
     )
     SELECT 
         COALESCE(nextval('cleansing_layer.workout_id_seq'), '-1') AS id,
-        COALESCE(workout_number::INT, '-1') AS workout_number,
-        COALESCE("date"::DATE, DATE '1900-01-01') AS date,
-        COALESCE(set_number::INT, '-1') AS set_number,
+        COALESCE(workout_number, '-1') AS workout_number,
+        COALESCE("date", '1900-01-01') AS "date",
+        COALESCE(set_number, '-1') AS set_number,
         COALESCE(exercise, 'N/A') AS exercise,
-        COALESCE(reps::NUMERIC, '0') AS reps,
-        COALESCE("load"::NUMERIC, '-1') AS load,
+        COALESCE(reps, '0') AS reps,
+        COALESCE("load", '0') AS "load",
         COALESCE(resistance_type, 'N/A') AS resistance_type,
         COALESCE(set_type, 'N/A') AS set_type,
-        COALESCE("comments", 'N/A') AS comments,
+        COALESCE("comments", 'N/A') AS "comments",
         COALESCE(workout_type, 'N/A') AS workout_type,
         now() AS created_at
     FROM (
