@@ -39,6 +39,8 @@ def connect_db():
     engine = None
 
     # Try Airflow connection first
+    # to do: figure out why airflow doesnt have gym_db as a variable 
+    # it seems we are always using the fallback logic in our DAGs
     try:
         conn = BaseHook.get_connection("gym_db")
         engine = create_engine(conn.get_uri())

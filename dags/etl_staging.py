@@ -4,11 +4,12 @@ import pendulum
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.email import EmailOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
 from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.models.baseoperator import chain
 
-# import your modules
+# import my hard work
 import DWH.extract_scripts.connect as c
 import DWH.extract_scripts.extract_exercise_muscles as eem
 import DWH.extract_scripts.extract_exercises as ee
@@ -98,15 +99,15 @@ with DAG(
         python_callable=extract_workouts_callable,
     )
 
-    notify = EmailOperator(
-        task_id="notify",
-        to="codreanu.andrei1125@gmail.com",
-        subject="ETL Pipeline Completed",
-        html_content="The staging_layer load has finished running successfully.",
+    trigger_load_to_cl = TriggerDagRunOperator(
+        task_id ="trigger_load_to_cl",
+        trigger_dag_id="etl_load_to_cleansing",
+        wait_for_completion=False
     )
+    
 
     # dependencies
     first_half = [t1, t2, t3]
     second_half = [t4, t5]
-    chain(*first_half, *second_half, notify)
+    chain(*first_half, *second_half, trigger_load_to_cl)
 
