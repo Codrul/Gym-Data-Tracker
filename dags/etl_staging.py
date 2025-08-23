@@ -6,6 +6,7 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.email import EmailOperator
 from datetime import datetime, timedelta
 from airflow.utils.log.logging_mixin import LoggingMixin
+from airflow.models.baseoperator import chain
 
 # import your modules
 import DWH.extract_scripts.connect as c
@@ -62,14 +63,36 @@ default_args = {
 local_tz = pendulum.timezone("Europe/Bucharest")
 
 with DAG(
-    dag_id="etl_gym_data",
+    dag_id="etl_extract_to_staging",
     default_args=default_args,
     start_date=datetime(2025, 1, 1, tzinfo=local_tz),
     schedule_interval="0 1 * * *",
     catchup=False,
     tags=["ETL"],
+    max_active_tasks=16,
+    concurrency=6
 ) as dag:
  
+    t1 = PythonOperator(
+        task_id="extract_exercises",
+        python_callable=extract_exercises_callable,
+    )
+
+    t2 = PythonOperator(
+        task_id="extract_muscles",
+        python_callable=extract_muscles_callable,
+    )
+
+    t4 = PythonOperator(
+        task_id="extract_exercise_muscle",
+        python_callable=extract_exercise_muscle_callable,
+    )
+
+    t3 = PythonOperator(
+        task_id="extract_resistance_types",
+        python_callable=extract_resistance_types_callable,
+    )
+
     t5 = PythonOperator(
         task_id="extract_workouts",
         python_callable=extract_workouts_callable,
@@ -79,9 +102,11 @@ with DAG(
         task_id="notify",
         to="codreanu.andrei1125@gmail.com",
         subject="ETL Pipeline Completed",
-        html_content="The workout table load has finished running successfully.",
+        html_content="The staging_layer load has finished running successfully.",
     )
 
     # dependencies
-    t5 >> notify
+    first_half = [t1, t2, t3]
+    second_half = [t4, t5]
+    chain(*first_half, *second_half, notify)
 
