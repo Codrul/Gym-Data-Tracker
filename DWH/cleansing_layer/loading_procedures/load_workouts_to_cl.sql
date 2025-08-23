@@ -30,7 +30,7 @@ BEGIN
         COALESCE(set_number, '-1') AS set_number,
         COALESCE(exercise, 'N/A') AS exercise,
         COALESCE(reps, '0') AS reps,
-        COALESCE("load", '0') AS "load",
+        "load" AS "load",
         COALESCE(resistance_type, 'N/A') AS resistance_type,
         COALESCE(set_type, 'N/A') AS set_type,
         COALESCE("comments", 'N/A') AS "comments",
@@ -55,7 +55,8 @@ BEGIN
       FROM cleansing_layer.cl_workouts tgt
       WHERE tgt.workout_number = src.workout_number
 		AND tgt."date" = src."date"
-		AND COALESCE(TRIM(LOWER(tgt.exercise)), '') = COALESCE(TRIM(LOWER(src.exercise)), '')
+		AND COALESCE(TRIM(LOWER(tgt.exercise)), 'N/A') = COALESCE(TRIM(LOWER(src.exercise)), 'N/A')
+		AND COALESCE(TRIM(LOWER(tgt.set_number)), '0') = COALESCE(TRIM(LOWER(src.set_number)), '0')
     );
 
     GET DIAGNOSTICS v_rows_affected = ROW_COUNT;

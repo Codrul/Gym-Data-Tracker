@@ -38,20 +38,11 @@ BEGIN
     GET DIAGNOSTICS rows_updated_date = ROW_COUNT;
 
     -- turn commas into dots for numeric values
-    UPDATE cleansing_layer.cl_workouts
-    SET "load" = new_value
-    FROM (
-        SELECT id,
-               CASE
-                   WHEN regexp_replace(regexp_replace("load", '[ ]', '', 'g'), ',', '.', 'g') ~ '^[0-9]+(\.[0-9]+)?$'
-                   THEN regexp_replace(regexp_replace("load", '[ ]', '', 'g'), ',', '.', 'g')::numeric::text
-                   ELSE '0'
-               END AS new_value
-        FROM cleansing_layer.cl_workouts
-        WHERE "load" IS NOT NULL
-    ) sub
-    WHERE cleansing_layer.cl_workouts.id = sub.id
-      AND (cleansing_layer.cl_workouts."load" IS DISTINCT FROM sub.new_value);
+	UPDATE cleansing_layer.cl_workouts
+	SET "load" = regexp_replace("load", ',', '.', 'g')
+	WHERE "load" ~ '[0-9]' AND "load" LIKE '%,%';
+
+
     GET DIAGNOSTICS rows_updated_load_dot = ROW_COUNT;
 
     -- remove special chars in multiple columns
@@ -99,6 +90,11 @@ BEGIN
     WHERE "load" ~* '(kg|lbs)';
     GET DIAGNOSTICS rows_updated_load_unit = ROW_COUNT;
 
+	UPDATE cleansing_layer.cl_workouts
+	SET "load" = COALESCE(NULLIF(TRIM("load"), ''), '0')
+	WHERE "load" = '';
+
+
 	UPDATE cleansing_layer.cl_workouts w
 	SET exercise_id = e.exercise_id
 	FROM cleansing_layer.cl_exercises e
@@ -121,6 +117,43 @@ BEGIN
 	SET 
 	    "load" = '0'
 	WHERE "load" IS NULL OR TRIM("load") = '';
+
+	UPDATE cleansing_layer.cl_workouts
+	SET 
+		set_number = '0'
+	WHERE set_number IS NULL OR trim(set_number) = '';
+
+	UPDATE cleansing_layer.cl_workouts
+	SET
+		exercise = 'N/A'
+	WHERE exercise IS NULL OR trim(exercise) = '';
+
+	UPDATE cleansing_layer.cl_workouts
+	SET 
+		resistance_type = 'N/A'
+	WHERE resistance_type IS NULL or TRIM(resistance_type) = '';
+
+	UPDATE cleansing_layer.cl_workouts
+	SET 
+		set_type = 'N/A'
+	WHERE set_type IS NULL or TRIM(set_type) = '';
+	
+	UPDATE cleansing_layer.cl_workouts
+	SET 
+		"comments" = 'N/A'
+	WHERE "comments" IS NULL or TRIM("comments") = '';
+
+	UPDATE cleansing_layer.cl_workouts
+	SET 
+		workout_type = 'N/A'
+	WHERE workout_type IS NULL or TRIM(workout_type) = '';
+
+	UPDATE cleansing_layer.cl_workouts
+	SET 
+		"date" = '1900-01-01'
+	WHERE "date" IS NULL or TRIM("date") = '';
+
+
 	
 	GET DIAGNOSTICS rows_updated_id = ROW_COUNT;
 
