@@ -48,6 +48,13 @@ def connect_db():
     except Exception:
         logger.info("[connect_db] Airflow connection 'gym_db' not found, falling back to local/secret logic")
 
+    # ok so this should actually use my airflow metadata
+    airflow_conn = os.environ.get("AIRFLOW_CONN_GYM_DB")
+    if airflow_conn:
+        engine = create_engine(airflow_conn)
+        logger.info("[connect_db] Using AIRFLOW_CONN_GYM_DB from env")
+        return engine
+
     # Fallback to local/secret logic if Airflow connection not found
     if engine is None:
         db_password = os.environ.get("DB_PASSWORD")
