@@ -1,13 +1,33 @@
 services:
-  airflow:
-    image: apache/airflow:2.7.1
-    container_name: airflow
+  airflow-scheduler:
+    build: ./airflow/
+    container_name: airflow-scheduler
     restart: always
     env_file:
-      - .env 
+      - .env
+    environment: 
+      - PYTHONPATH=/usr/local/airflow:/usr/local/airflow/DWH
     volumes:
-      - /c/Users/aditz/Gym_Data_Tracker/airflow:/usr/local/airflow/
-    command: standalone
+      - C:/Users/aditz/Gym_Data_Tracker/DWH:/usr/local/airflow/DWH
+      - C:/Users/aditz/Gym_Data_Tracker/dags:/usr/local/airflow/dags
+    command: scheduler
+    networks:
+      - airflow-net
+    mem_limit: 2g
+    cpus: 1.0
+
+  airflow-webserver:
+    build: ./airflow/
+    container_name: airflow-webserver
+    restart: always
+    env_file:
+      - .env
+    environment: 
+      - PYTHONPATH=/usr/local/airflow:/usr/local/airflow/DWH
+    volumes:
+      - C:/Users/aditz/Gym_Data_Tracker/DWH:/usr/local/airflow/DWH
+      - C:/Users/aditz/Gym_Data_Tracker/dags:/usr/local/airflow/dags
+    command: webserver
     ports:
       - "8080:8080"
     networks:
