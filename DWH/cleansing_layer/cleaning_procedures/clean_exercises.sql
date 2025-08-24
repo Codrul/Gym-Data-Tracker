@@ -39,9 +39,9 @@ BEGIN
         exercise_movement_type = regexp_replace(exercise_movement_type, '[^0-9A-Za-z\s\-\.,]', '', 'g'),
         exercise_bodysplit = regexp_replace(exercise_bodysplit, '[^0-9A-Za-z\s\-\.,]', '', 'g')
     WHERE
-        exercise_name ~ '[^0-9A-Za-z\s\-\.,]'
-        OR exercise_movement_type ~ '[^0-9A-Za-z\s\-\.,]'
-        OR exercise_bodysplit ~ '[^0-9A-Za-z\s\-\.,]';
+        (exercise_name ~ '[^0-9A-Za-z\s\-\.,]' and exercise_name != 'N/A')
+        OR (exercise_movement_type ~ '[^0-9A-Za-z\s\-\.,]' and exercise_name != 'N/A')
+        OR (exercise_bodysplit ~ '[^0-9A-Za-z\s\-\.,]' and exercise_name != 'N/A');
 
     GET DIAGNOSTICS rows_updated_special_chars = ROW_COUNT;
 
@@ -61,15 +61,15 @@ BEGIN
                                 '\s+', ' ', 'g'
                             )
     WHERE
-        (exercise_name IS NOT NULL AND exercise_name <> regexp_replace(
+        (exercise_name != 'N/A' AND exercise_name <> regexp_replace(
             upper(substr(exercise_name, 1, 1)) || lower(substr(exercise_name, 2)),
             '\s+', ' ', 'g'
         ))
-        OR (exercise_movement_type IS NOT NULL AND exercise_movement_type <> regexp_replace(
+        OR (exercise_movement_type != 'N/A' AND exercise_movement_type <> regexp_replace(
             upper(substr(exercise_movement_type, 1, 1)) || lower(substr(exercise_movement_type, 2)),
             '\s+', ' ', 'g'
         ))
-        OR (exercise_bodysplit IS NOT NULL AND exercise_bodysplit <> regexp_replace(
+        OR (exercise_bodysplit != 'N/A' AND exercise_bodysplit <> regexp_replace(
             upper(substr(exercise_bodysplit, 1, 1)) || lower(substr(exercise_bodysplit, 2)),
             '\s+', ' ', 'g'
         ));

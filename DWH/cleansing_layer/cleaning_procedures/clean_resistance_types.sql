@@ -34,15 +34,19 @@ BEGIN
   GET DIAGNOSTICS rows_updated_special_chars = ROW_COUNT;
 
   -- trim spaces and capitalize first letter
-  UPDATE cleansing_layer.cl_workouts cw
-  SET exercise = regexp_replace(
-                   upper(substr(cw.exercise, 1, 1)) || lower(substr(cw.exercise, 2)), 
+  UPDATE cleansing_layer.cl_resistance_types
+  SET 
+	resistance_type = regexp_replace(
+                   upper(substr(resistance_type, 1, 1)) || lower(substr(resistance_type, 2)), 
+                   '\s+', ' ', 'g'
+                ),
+	resistance_category = regexp_replace(
+                   upper(substr(resistance_category, 1, 1)) || lower(substr(resistance_category, 2)), 
                    '\s+', ' ', 'g'
                 )
-  WHERE exercise IS NOT NULL
-    AND exercise <> regexp_replace(
-                        upper(substr(cw.exercise, 1, 1)) || lower(substr(cw.exercise, 2)), 
-                        '\s+', ' ', 'g'
+  WHERE 
+	(resistance_type != 'N/A' AND resistance_type <> regexp_replace(upper(substr(resistance_type, 1, 1)) || lower(substr(resistance_type, 2)),  '\s+', ' ', 'g'))
+	OR (resistance_category != 'N/A' AND resistance_category <> regexp_replace(upper(substr(resistance_category, 1, 1)) || lower(substr(resistance_category, 2)),  '\s+', ' ', 'g')
                      );
 
   GET DIAGNOSTICS rows_updated_capitalize = ROW_COUNT;

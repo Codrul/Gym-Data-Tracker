@@ -31,9 +31,9 @@ BEGIN
     muscle_name = regexp_replace(muscle_name, '[^0-9A-Za-z\s\-\.,]', '', 'g'),
 	muscle_role = regexp_replace(muscle_role, '[^0-9A-Za-z\s\-\.,]', '', 'g')
   WHERE
-   	exercise_name <> regexp_replace(exercise_name, '[^0-9A-Za-z\s\-\.,]', '', 'g')
-	AND muscle_name <> regexp_replace(muscle_name, '[^0-9A-Za-z\s\-\.,]', '', 'g')
-	AND muscle_role <> regexp_replace(muscle_role, '[^0-9A-Za-z\s\-\.,]', '', 'g');
+   	(exercise_name != 'N/A' AND exercise_name <> regexp_replace(exercise_name, '[^0-9A-Za-z\s\-\.,]', '', 'g'))
+	AND (muscle_name != 'N/A' AND muscle_name <> regexp_replace(muscle_name, '[^0-9A-Za-z\s\-\.,]', '', 'g'))
+	AND (muscle_role != 'N/A' AND muscle_role <> regexp_replace(muscle_role, '[^0-9A-Za-z\s\-\.,]', '', 'g'));
 
   GET DIAGNOSTICS rows_updated_special_chars = ROW_COUNT;
 
@@ -51,17 +51,17 @@ BEGIN
                    upper(substr(muscle_role, 1, 1)) || lower(substr(muscle_role, 2)), 
                    '\s+', ' ', 'g'
                 )
-  WHERE exercise_name IS NOT NULL
+  WHERE exercise_name != 'N/A'
     AND exercise_name <> regexp_replace(
                    upper(substr(exercise_name, 1, 1)) || lower(substr(exercise_name, 2)), 
                    '\s+', ' ', 'g'
                 )
-	OR muscle_name IS NOT NULL 
+	OR muscle_name != 'N/A' 
 	AND muscle_name <> regexp_replace(
                    upper(substr(muscle_name, 1, 1)) || lower(substr(muscle_name, 2)), 
                    '\s+', ' ', 'g'
                 )
-	OR muscle_role IS NOT NULL
+	OR muscle_role != 'N/A'
 	AND muscle_role <> regexp_replace(
                    upper(substr(muscle_role, 1, 1)) || lower(substr(muscle_role, 2)), 
                    '\s+', ' ', 'g'

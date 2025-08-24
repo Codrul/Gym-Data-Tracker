@@ -11,22 +11,7 @@ DECLARE
 	rows_updated_id				INT :=0;
     total_changed           	INT := 0;
 BEGIN
-    -- deduplicate rows
-    WITH duplicates AS (
-        SELECT workout_number, "date", set_number, exercise, min(id) AS min_id
-        FROM cleansing_layer.cl_workouts
-        GROUP BY workout_number, "date", set_number, exercise
-        HAVING COUNT(*) > 1
-    )
-    DELETE FROM cleansing_layer.cl_workouts cw
-    USING duplicates d
-    WHERE cw.workout_number = d.workout_number
-      AND cw."date" = d."date"
-      AND cw.set_number = d.set_number
-      AND cw.exercise = d.exercise
-      AND cw.id <> d.min_id;
-    GET DIAGNOSTICS rows_deleted = ROW_COUNT;
-
+    
     -- standardize date formats
     UPDATE cleansing_layer.cl_workouts
     SET "date" = CASE
@@ -48,11 +33,10 @@ BEGIN
     -- remove special chars in multiple columns
     UPDATE cleansing_layer.cl_workouts
     SET exercise = regexp_replace(exercise, '[^0-9A-Za-z\s\-\.,]', '', 'g'),
-        "comments" = regexp_replace("comments", '[^0-9A-Za-z\s\-\.,]', '', 'g'),
         workout_type = regexp_replace(workout_type, '[^0-9A-Za-z\s\-\.,]', '', 'g')
-    WHERE exercise ~ '[^0-9A-Za-z\s\-\.,]'
-       OR "comments" ~ '[^0-9A-Za-z\s\-\.,]'
-       OR workout_type ~ '[^0-9A-Za-z\s\-\.,]';
+    WHERE (exercise ~ '[^0-9A-Za-z\s\-\.,]' AND exercise != 'N/A')
+       OR (workout_type ~ '[^0-9A-Za-z\s\-\.,]' AND workout_type != 'N/A');
+
     GET DIAGNOSTICS rows_updated_special_chars = ROW_COUNT;
 
     -- trim spaces and capitalize first letter
@@ -65,12 +49,12 @@ BEGIN
 	                   upper(substr(cw.resistance_type, 1, 1)) || lower(substr(cw.resistance_type, 2)),
 	                   '\s+', ' ', 'g'
 	               )
-	WHERE (exercise IS NOT NULL
+	WHERE (exercise != 'N/A'
 	       AND exercise <> regexp_replace(
 	                           upper(substr(cw.exercise, 1, 1)) || lower(substr(cw.exercise, 2)),
 	                           '\s+', ' ', 'g'
 	                       ))
-	   OR (resistance_type IS NOT NULL
+	   OR (resistance_type != 'N/A'
 	       AND resistance_type <> regexp_replace(
 	                           upper(substr(cw.resistance_type, 1, 1)) || lower(substr(cw.resistance_type, 2)),
 	                           '\s+', ' ', 'g'
@@ -156,6 +140,22 @@ BEGIN
 
 	
 	GET DIAGNOSTICS rows_updated_id = ROW_COUNT;
+
+-- deduplicate rows
+    WITH duplicates AS (
+        SELECT workout_number, "date", set_number, exercise, min(id) AS min_id
+        FROM cleansing_layer.cl_workouts
+        GROUP BY workout_number, "date", set_number, exercise
+        HAVING COUNT(*) > 1
+    )
+    DELETE FROM cleansing_layer.cl_workouts cw
+    USING duplicates d
+    WHERE cw.workout_number = d.workout_number
+      AND cw."date" = d."date"
+      AND cw.set_number = d.set_number
+      AND cw.exercise = d.exercise
+      AND cw.id <> d.min_id;
+    GET DIAGNOSTICS rows_deleted = ROW_COUNT;
 
     total_changed := rows_deleted + rows_updated_date + rows_updated_load_dot
                    + rows_updated_special_chars + rows_updated_capitalize + rows_updated_load_unit + rows_updated_id;
