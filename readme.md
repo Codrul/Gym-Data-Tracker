@@ -93,10 +93,6 @@
 > 
 > ### The Physical Model
 > ![Physical Model](Images/physical_model.png)
-> 
-### The Physical Model
-![Physical Model](Images/physical_model.png)
-
 > The physical model is the technical blueprint of our database. At this stage, we have moved beyond entities and relationships and have defined concrete tables, columns, data types, and constraints.  
 > 
 > **Key updates in this model:**  
