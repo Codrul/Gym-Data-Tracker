@@ -3,3 +3,6 @@ APIs/*.txt
 __pycache__/
 *.pyc
 venv/
+.env
+.idea/
+logs/
