@@ -320,4 +320,27 @@
 > is actually ready — no more guessing or waiting.  
 > 
 > > ## Chapter 7: _Power BI, analytics and reports_ 
-> **this is currently in progress**
+> 
+> In order to have my data refreshed I had to configure a on-premises data gateway which I have done before but now I 
+> SQL server uninstalled. I decided to go on and install the postgres variant **Npgsql** as I have heard is open source.
+> Unfortunately I could not manage the drivers and the connections as my data gateway did not want in any way, shape or 
+> form to connect to my local database from Power BI Service. 
+> Defeated, I installed SQL Server again and tried once more. 
+> Defeated again as I realized I would have to migrate my database, I tried my PostgreSQL connection in Power BI Service 
+> and now it worked. Somehow the connection worked. I checked my pg_hba.conf and my postgresql.conf file to make sure 
+> Postgres would accept the connection before and I have changed nothing, but after a while my data gateway was finally 
+> able to pick my postgres server up. 
+> 
+> Thus, I successfully configured the connection between my local Postgres database to Power BI Service. 
+> Now I just need to finish my report and integrate my refresh in Airflow with the refresh API. 
+> 
+> Then reality hit and I figured if I needed to call the API I would need to create a service account in Microsoft 
+> Azure. For legal reasons, I would first need to ask for approval to create this resource. As this would have been 
+> quite a weird email and my desire to buy a Power BI Pro license for myself is next to null as I would not use it for 
+> much other than simply getting the practice to use the API, I decided to drop my plans for viewing the report on my 
+> phone from Power BI Service automatically and refresh it on a schedule or manually. I would still be able to see it 
+> on my phone, but it would be up to date only if I had my laptop opened so the report can be refreshed. This is something 
+> I can live with rather than deal with legal complications for a passion project. 
+> 
+> So I started getting to actually building the report and choosing themes and making it look nice. I wanted to be 
+> practical with this report as design is not really my strong point but asking questions is. 
