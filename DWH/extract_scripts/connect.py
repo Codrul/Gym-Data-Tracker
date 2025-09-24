@@ -64,7 +64,7 @@ def connect_db():
                 db_password = f.read().strip()
             logger.info(f"[connect_db] Using local password file: {local_pass_file}")
 
-        db_host = "host.docker.internal" if os.environ.get("IN_DOCKER") == "1" else "localhost"
+        db_host = "host.docker.internal" if os.environ.get("IN_DOCKER") == "1" else "192.168.1.178"
         engine = create_engine(f'postgresql+psycopg2://postgres:{db_password}@{db_host}:5432/gym_data')
         logger.info(f"[connect_db] Using fallback connection: postgres://postgres@{db_host}:5432/gym_data")
 
