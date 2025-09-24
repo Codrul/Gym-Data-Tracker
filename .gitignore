@@ -6,3 +6,5 @@ venv/
 .env
 .idea/
 logs/
+git_ssh_key
+git_ssh_key.pub
