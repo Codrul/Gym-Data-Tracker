@@ -1,5 +1,11 @@
-import sys 
-sys.path.insert(0, "/usr/local/airflow")
+import sys
+import os
+# dynamically set python root so my modules get read
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import pendulum
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -67,11 +73,10 @@ with DAG(
     dag_id="etl_extract_to_staging",
     default_args=default_args,
     start_date=datetime(2025, 1, 1, tzinfo=local_tz),
-    schedule_interval="0 1 * * *",
+    schedule="@daily",
     catchup=False,
     tags=["ETL"],
-    max_active_tasks=16,
-    concurrency=6
+    max_active_tasks=16
 ) as dag:
  
     t1 = PythonOperator(
@@ -106,8 +111,10 @@ with DAG(
     )
     
 
-    # dependencies
-    first_half = [t1, t2, t3]
-    second_half = [t4, t5]
-    chain(*first_half, *second_half, trigger_load_to_cl)
+# list all tasks that should run in parallel
+extract_tasks = [t1, t2, t3, t4, t5]
 
+# set the TriggerDagRunOperator to run after all extract tasks
+for t in extract_tasks:
+    t >> trigger_load_to_cl # I swear this looks like a for loop but apparently in airflow it should run the 
+                            # tasks in parallel and then the last one after the first ones are finished

@@ -1,5 +1,11 @@
 import sys
-sys.path.insert(0, "/usr/local/airflow")
+import os
+# dynamically set python root so my modules get read
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import pendulum
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -37,11 +43,10 @@ with DAG(
     dag_id="etl_cleansing",
     default_args=default_args,
     start_date=datetime(2025, 1, 1, tzinfo=local_tz),
-    schedule_interval=None,
+    schedule=None,
     catchup=False,
     tags=["ETL"],
-    max_active_tasks=16,
-    concurrency=5
+    max_active_tasks=16
 ) as dag:
 
     t1 = PythonOperator(
